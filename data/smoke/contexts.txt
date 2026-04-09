@@ -1,0 +1,2 @@
+object movement, case5, reach, gate2, at 1181269200, warehouse4, 1181269200
+object movement, case5, reach, dock3, at 1181269080, warehouse4, 1181269080

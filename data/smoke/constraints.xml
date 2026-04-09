@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<constraints>
+  <constraint name="transit">
+    <forall var="reach" in="REACH">
+      <not>
+        <exists var="dock" in="DOCK">
+          <bfunc name="WithinTrans">
+            <param var="reach" />
+            <param var="dock" />
+          </bfunc>
+        </exists>
+      </not>
+    </forall>
+  </constraint>
+</constraints>

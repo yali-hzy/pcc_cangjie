@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<patterns>
+  <pattern name="REACH">
+    <category>object movement</category>
+    <subject>any</subject>
+    <predicate>reach</predicate>
+    <object>gate2</object>
+    <lifespan>any</lifespan>
+    <site>warehouse4</site>
+    <timestamp>any</timestamp>
+  </pattern>
+
+  <pattern name="DOCK">
+    <category>object movement</category>
+    <subject>any</subject>
+    <predicate>reach</predicate>
+    <object>dock3</object>
+    <lifespan>any</lifespan>
+    <site>warehouse4</site>
+    <timestamp>any</timestamp>
+  </pattern>
+</patterns>
