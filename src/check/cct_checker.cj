@@ -1,10 +1,11 @@
 package pcc_cangjie.check
 
-import pcc_cangjie.defs.{Context, Pattern, Constraint}
+import pcc_cangjie.defs.{Context, Pattern, Constraint, CtxChangeItem, ContextChangeType, DEBUG}
 import pcc_cangjie.collection.ContextFlow
 import std.collection.{HashMap, Map, ArrayList, enumerate, map, collectArray}
 import std.collection.concurrent.LinkedBlockingQueue
 import std.sync.Mutex
+import std.sort.sort
 
 public class CctChecker {
     let PatternNames2Id: HashMap<String, Int> = HashMap<String, Int>()
@@ -58,11 +59,10 @@ public class CctChecker {
                 println("syntaxTree ${i}: ${syntaxTree.root}")
                 Cct(syntaxTree)
         } |> collectArray
-
-        ContextSets = Array(patterns.size, {i => ContextSet(i, this)})
     }
 
     public func check(contexts: ContextFlow, method!: String): Unit {
+        ContextSets = Array(patterns.size, {i => ContextSet(i, this)})
         match (method) {
             case "ecc" => this.method = EccMethod(this)
             case "pcc" => this.method = PccMethod(this)
@@ -84,6 +84,52 @@ public class CctChecker {
                     println("Context matches pattern: ${pattern}")
                     ContextSets[i].add(n, context)
                 }
+            }
+        }
+    }
+
+    public func check(contexts: Array<Context>, method!: String): Unit {
+        ContextSets = Array(patterns.size, {i => ContextSet(i, this, freshness: patterns[i].freshness)})
+        // no priority_queue in version 1.0.5, using TreeSet to achieve similar effect
+        match (method) {
+            case "ecc" => this.method = EccMethod(this)
+            case "pcc" => this.method = PccMethod(this)
+            case _ => throw IllegalArgumentException("Unsupported check method: ${method}")
+        }
+        let ctxChgList = ArrayList<CtxChangeItem>(contexts.size)
+        for ((num, context) in enumerate(contexts)) {
+            context.id = (num + 1).toString()
+            for ((i, pattern) in enumerate(patterns)) {
+                // if (num == 3 || num == 2161) {
+                //     DEBUG = true
+                // }
+                // println("Checking context ${num} against pattern ${i}: ${pattern}")
+                if (pattern.matches(context)) {
+                    // println("Context matches pattern: ${pattern}")
+                    // if (num == 2 || num == 2161) {
+                    //     println("Context ${num} ${context} matches pattern ${pattern.name} and will be added to context set")
+                    // }
+                    ctxChgList.add(CtxChangeItem(num, context, i, ContextChangeType.Add, context.timestamp))
+                    ctxChgList.add(
+                        CtxChangeItem(num, context, i, ContextChangeType.Delete, context.timestamp + pattern.freshness))
+                    // if (ctxChgList.size %1000 == 0) {
+                    // println("${ctxChgList.size} context change items generated so far...")
+                    // }
+                }
+                DEBUG = false
+            }
+        }
+        sort(ctxChgList, stable: true)
+        // println("Sorted context change list:")
+        for (item in ctxChgList) {
+            // if (item.contextId == 3) {
+            //     break
+            // }
+            // println(
+            //     "Processing context change item: ${item.contextId} with timestamp ${item.timestamp} and type ${item.changeType} pattern ${patterns[item.patternId].name}")
+            match (item.changeType) {
+                case ContextChangeType.Add => ContextSets[item.patternId].offlineAdd(item.contextId, item.context)
+                case ContextChangeType.Delete => ContextSets[item.patternId].offlineDelete(item.contextId)
             }
         }
     }

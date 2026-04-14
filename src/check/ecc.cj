@@ -23,6 +23,7 @@ class EccMethod <: CheckMethod {
     }
 
     public func handleAdd(cct: Cct, nodeList: ArrayList<Int>, contextId: Int, context: Context): Unit {
+        // println("Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList}")
         cct.root = handleChange(cct.syntaxTree.root)
         LOGGER.getOrThrow().log(cct.result)
     }
@@ -63,6 +64,7 @@ open class EccEvaluator <: Evaluator {
         let map = node.assignments.map {x => x.collectHashMap()}.getOrDefault {=> HashMap<Int, Context>()}
         let bfunc = (node.syntaxTreeNode as BfuncSyntaxTreeNode).getOrThrow().bfunc
         node.truthValue = applyBfunc(bfunc.funcInfo, bfunc.argsId.map {argId => map[argId]})
+        // println("Evaluating Bfunc ${bfunc.funcInfo} with arguments ${bfunc.argsId.map {argId => map[argId]}}: ${node.truthValue}")
     }
 }
 

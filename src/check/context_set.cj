@@ -47,4 +47,18 @@ class ContextSet {
             }
         )
     }
+
+    func offlineAdd(contextId: Int, context: Context): Unit {
+        contextSet[contextId] = (context, 0)
+        for ((cctId, nodeList) in checker.PatternMap[id]) {
+            checker.method.getOrThrow().handleAdd(checker.CCTs[cctId], nodeList, contextId, context)
+        }
+    }
+
+    func offlineDelete(contextId: Int): Unit {
+        contextSet.remove(contextId)
+        for ((cctId, nodeList) in checker.PatternMap[id]) {
+            checker.method.getOrThrow().handleDelete(checker.CCTs[cctId], nodeList, contextId)
+        }
+    }
 }

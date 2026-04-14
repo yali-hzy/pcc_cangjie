@@ -15,6 +15,27 @@ public func parseConstraintsFromXml(xml: XmlTree): Array<Constraint> {
     return constraints.toArray()
 }
 
+public func parseTaxiConstraintsFromXml(xml: XmlTree): Array<Constraint> {
+    let constraints = ArrayList<Constraint>()
+    for (constraintNode in xml.childNodes) {
+        if (constraintNode.nodeName == "rule") {
+            var name: ?String = None
+            var formula: ?Formula = None
+            for (child in constraintNode.childNodes) {
+                if (child.nodeName == "id") {
+                    name = child.nodeValue
+                } else if (child.nodeName == "formula") {
+                    formula = parseFormulaFromXml(child.childNodes[0])
+                } else {
+                    throw ConstraintParseException("Unknown constraint field: ${child.nodeName}")
+                }
+            }
+            constraints.add(Constraint(name.getOrThrow(), formula.getOrThrow()))
+        }
+    }
+    return constraints.toArray()
+}
+
 public func parseFormulaFromXml(node: XmlTree): Formula {
     match (node.nodeName) {
         case "forall" => Forall(node.attributes["var"], node.attributes["in"], parseFormulaFromXml(node.childNodes[0]))

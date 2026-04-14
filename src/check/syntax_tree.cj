@@ -47,8 +47,13 @@ class SyntaxTreeBuilder {
     }
 
     private func insertPatternMap(s: Int, dfn: Int) {
+        println("Inserting pattern ${s} with dfn ${dfn} for constraint ${id}")
         if (PatternMap.contains(s)) {
-            PatternMap[s][id].add(dfn)
+            if (PatternMap[s].contains(id)) {
+                PatternMap[s][id].add(dfn)
+            } else {
+                PatternMap[s][id] = ArrayList([dfn])
+            }
         } else {
             PatternMap[s] = HashMap<Int, ArrayList<Int>>([(id, ArrayList([dfn]))])
         }

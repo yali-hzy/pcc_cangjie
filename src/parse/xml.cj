@@ -69,14 +69,21 @@ public class XmlParser {
                 } else {
                     stack.peek()
                 })
+                // println("Parsed tag: ${tagName}, attributes: ${parts[1..]}")
+                let partsList = ArrayList<String>()
                 for (i in 1..parts.size) {
-                    let attrParts = parts[i].split("=", 2)
-                    if (!(attrParts[1].startsWith('"') && attrParts[1].endsWith('"') || attrParts[1].startsWith("'") &&
-                        attrParts[1].endsWith("'"))) {
+                    let attrParts = parts[i].split("=", 2, removeEmpty: true)
+                    partsList.add(all: attrParts)
+                }
+                // println("Parsed attributes: ${partsList}")
+                for (i in 0..partsList.size : 2) {
+                    let attrName = partsList[i]
+                    let value = partsList[i + 1]
+                    // println("Parsed attribute: ${attrName} = ${value}")
+                    if (!(value.startsWith('"') && value.endsWith('"') || value.startsWith("'") && value.endsWith("'"))) {
                         throw XmlParseException("Invalid attribute format: ${parts[i]}")
                     }
-                    let attrName = attrParts[0]
-                    let attrValue = attrParts[1][1..attrParts[1].size - 1]
+                    let attrValue = value[1..value.size - 1]
                     newNode.attributes[attrName] = attrValue |> xmlRefDecode
                 }
                 if (root.isNone()) {

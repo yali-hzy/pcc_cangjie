@@ -8,19 +8,25 @@ public class Logger <: Resource {
     var closed = false
 
     public init(dir: String, fileName: String) {
-        let logDir = Path(dir)
+        let logDir = Path(dir).normalize()
         let logFilePath = logDir.join(fileName)
+        println("Initializing logger with directory: ${logDir}, file name: ${fileName}")
         if (!exists(logDir)) {
             Directory.create(logDir, recursive: true)
         }
         removeIfExists(logFilePath)
+        println("Logging to file: ${logFilePath}")
         logFile = File.create(logFilePath)
     }
 
     public func log(message: String): Unit {
-        let msg = "[${GlobalTimer.getOrThrow().now()}] ${message}\n"
-        logFile.write(msg.toArray())
-        print(msg)
+        // let msg = "[${GlobalTimer.getOrThrow().now()}] ${message}\n"
+        // logFile.write(msg.toArray())
+        // print(msg)
+        if (!message.isEmpty()) {
+            logFile.write("${message}\n".toArray())
+            println(message)
+        }
     }
 
     public func close(): Unit {

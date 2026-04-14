@@ -26,8 +26,8 @@ public enum LinkType <: ToString {
 
     public func toString(): String {
         match (this) {
-            case Satisfied => "Satisfied"
-            case Violated => "Violated"
+            case Satisfied => "satisfied"
+            case Violated => "violated"
         }
     }
 }

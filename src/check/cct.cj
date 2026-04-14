@@ -71,6 +71,7 @@ class CctBuilder {
             case Bfunc =>
                 let cctNode = BfuncNode(refNode, assignments)
                 listener.exitBfunc(cctNode)
+                // println(cctNode.truthValue)
                 return cctNode
         }
     }
@@ -98,12 +99,12 @@ class Cct {
             let links = root.getOrThrow().links.links
             let str = StringBuilder()
             if (links.isEmpty()) {
-                str.append("No links")
+            // str.append("No links")
             } else {
-                str.append("${links[0].linkType}")
+                str.append("${links[0].linkType},")
                 for (link in links) {
                     str.append(
-                        "\n{${link.bindings |> map {assignment => "${syntaxTree.dfn2VarName[assignment.varId]} = ${assignment.ctx}"} |> collectString( delimiter: ", ")}}")
+                        "{${link.bindings |> map {assignment => "(${syntaxTree.dfn2VarName[assignment.varId]}, ${assignment.ctx.id})"} |> collectString(delimiter: ",")}}")
                 }
             }
             return str.toString()
@@ -112,7 +113,11 @@ class Cct {
 
     prop result: String {
         get() {
-            "${syntaxTree.name}:\n${truthValue}\n${link}"
+            if (!root.getOrThrow().truthValue) {
+                "${syntaxTree.name}(${link})"
+            } else {
+                ""
+            }
         }
     }
 }

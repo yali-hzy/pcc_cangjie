@@ -13,6 +13,10 @@ public func parseDateTimeFromTimeStamp(timestampStr: String): DateTime {
     return parseDateTimeFromTimeStamp(Int64.parse(timestampStr))
 }
 
+public func parseDateTimeFromStr(dateTimeStr: String): DateTime {
+    return DateTime.parse(dateTimeStr, "yyyy-MM-dd HH:mm:ss:S")
+}
+
 public func parseLifespan(lifespanStr: String): Lifespan {
     let parts = lifespanStr.split(" ", removeEmpty: true)
     let timeStrs = ArrayList<String>()
