@@ -5,6 +5,7 @@ import pcc_cangjie.collection.{Links, Link, LinkType}
 import pcc_cangjie.logger.LOGGER
 import std.collection.ArrayList
 import std.sort.sort
+import std.time.MonoTime
 
 interface PccEvaluatorListener <: Evaluator {
     func exitForall(node: ForallNode, newNode: CctNode): Unit
@@ -40,21 +41,39 @@ class PccMethod <: CheckMethod {
     }
 
     public func handleAdd(cct: Cct, nodeList: ArrayList<Int>, contextId: Int, context: Context): Unit {
+        let time = MonoTime.now()
         let sortedNodeList = nodeList.clone()
         sort(sortedNodeList, key: {nodeId => cct.syntaxTree.nodes[nodeId].depth}, descending: true)
         for (nodeId in sortedNodeList) {
             pccAdjuster.handleAdd(cct, nodeId, contextId, context)
         }
-        LOGGER.getOrThrow().log(cct.result)
+        let elapsed = MonoTime.now() - time
+        let result = cct.link
+        for (link in result) {
+            LOGGER.getOrThrow().log(link)
+        }
+        LOGGER.getOrThrow().addDuration(elapsed)
+        if (elapsed > Duration.millisecond * 100) {
+            println("Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+        }
     }
 
     public func handleDelete(cct: Cct, nodeList: ArrayList<Int>, contextId: Int): Unit {
+        let time = MonoTime.now()
         let sortedNodeList = nodeList.clone()
         sort(sortedNodeList, key: {nodeId => cct.syntaxTree.nodes[nodeId].depth})
         for (nodeId in sortedNodeList) {
             pccAdjuster.handleDelete(cct, nodeId, contextId)
         }
-        LOGGER.getOrThrow().log(cct.result)
+        let elapsed = MonoTime.now() - time
+        let result = cct.link
+        for (link in result) {
+            LOGGER.getOrThrow().log(link)
+        }
+        LOGGER.getOrThrow().addDuration(elapsed)
+        if (elapsed > Duration.millisecond * 100) {
+            println("Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+        }
     }
 }
 

@@ -6,6 +6,9 @@ import std.collection.{HashMap, Map, ArrayList, enumerate, map, collectArray}
 import std.collection.concurrent.LinkedBlockingQueue
 import std.sync.Mutex
 import std.sort.sort
+import std.time.MonoTime
+import std.runtime.*
+import std.fs.*
 
 public class CctChecker {
     let PatternNames2Id: HashMap<String, Int> = HashMap<String, Int>()
@@ -100,13 +103,13 @@ public class CctChecker {
         for ((num, context) in enumerate(contexts)) {
             context.id = (num + 1).toString()
             for ((i, pattern) in enumerate(patterns)) {
-                // if (num == 3 || num == 2161) {
+                // if (context.id == "2772" || context.id == "4064") {
                 //     DEBUG = true
                 // }
                 // println("Checking context ${num} against pattern ${i}: ${pattern}")
                 if (pattern.matches(context)) {
                     // println("Context matches pattern: ${pattern}")
-                    // if (num == 2 || num == 2161) {
+                    // if (context.id == "2772" || context.id == "4064") {
                     //     println("Context ${num} ${context} matches pattern ${pattern.name} and will be added to context set")
                     // }
                     ctxChgList.add(CtxChangeItem(num, context, i, ContextChangeType.Add, context.timestamp))
@@ -119,8 +122,12 @@ public class CctChecker {
                 DEBUG = false
             }
         }
+        // return
         sort(ctxChgList, stable: true)
         // println("Sorted context change list:")
+        let startTime = MonoTime.now()
+        var recorded = false
+        startCPUProfiling()
         for (item in ctxChgList) {
             // if (item.contextId == 3) {
             //     break
@@ -130,6 +137,11 @@ public class CctChecker {
             match (item.changeType) {
                 case ContextChangeType.Add => ContextSets[item.patternId].offlineAdd(item.contextId, item.context)
                 case ContextChangeType.Delete => ContextSets[item.patternId].offlineDelete(item.contextId)
+            }
+            if (!recorded && MonoTime.now() - startTime > Duration.second) {
+                let output = Path("./cpu_profile.txt").normalize()
+                stopCPUProfiling(output)
+                recorded = true
             }
         }
     }

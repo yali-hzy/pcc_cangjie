@@ -4,6 +4,7 @@ import pcc_cangjie.defs.Context
 import pcc_cangjie.collection.{Link, Links, LinkType}
 import pcc_cangjie.logger.LOGGER
 import std.collection.{fold, ArrayList, filter, HashMap, forEach}
+import std.time.MonoTime
 
 class EccListener <: CheckListener<Evaluator, Generator> {
     init() {
@@ -24,13 +25,31 @@ class EccMethod <: CheckMethod {
 
     public func handleAdd(cct: Cct, nodeList: ArrayList<Int>, contextId: Int, context: Context): Unit {
         // println("Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList}")
+        let time = MonoTime.now()
         cct.root = handleChange(cct.syntaxTree.root)
-        LOGGER.getOrThrow().log(cct.result)
+        let elapsed = MonoTime.now() - time
+        let result = cct.link
+        for (link in result) {
+            LOGGER.getOrThrow().log(link)
+        }
+        LOGGER.getOrThrow().addDuration(elapsed)
+        if (elapsed > Duration.millisecond * 100) {
+            println("Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+        }
     }
 
     public func handleDelete(cct: Cct, nodeList: ArrayList<Int>, contextId: Int): Unit {
+        let time = MonoTime.now()
         cct.root = handleChange(cct.syntaxTree.root)
-        LOGGER.getOrThrow().log(cct.result)
+        let elapsed = MonoTime.now() - time
+        let result = cct.link
+        for (link in result) {
+            LOGGER.getOrThrow().log(link)
+        }
+        LOGGER.getOrThrow().addDuration(elapsed)
+        if (elapsed > Duration.millisecond * 100) {
+            println("Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+        }
     }
 }
 

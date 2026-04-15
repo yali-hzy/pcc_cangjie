@@ -134,6 +134,7 @@ func loadTaxiData(path: String, contextPath!: String = "contexts.txt", patternPa
             } else {
                 "run_with_service"
             }
+            ctx.site = "sutpc_${Rune(parts[1][parts[1].size - 2])}"
             // println("Parsed context: ${ctx}")
             contexts.add(ctx)
         }

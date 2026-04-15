@@ -94,27 +94,25 @@ class Cct {
         }
     }
 
-    prop link: String {
+    prop link: ArrayList<String> {
         get() {
+            let linkstr = ArrayList<String>()
             let links = root.getOrThrow().links.links
-            let str = StringBuilder()
             if (links.isEmpty()) {
             // str.append("No links")
             } else {
-                str.append("${links[0].linkType},")
                 for (link in links) {
-                    str.append(
-                        "{${link.bindings |> map {assignment => "(${syntaxTree.dfn2VarName[assignment.varId]}, ${assignment.ctx.id})"} |> collectString(delimiter: ",")}}")
+                    linkstr.add("${syntaxTree.name}(${links[0].linkType},{${link.bindings |> map {assignment => "(${syntaxTree.dfn2VarName[assignment.varId]}, ${assignment.ctx.id})"} |> collectString(delimiter: ",")}})")
                 }
             }
-            return str.toString()
+            return linkstr
         }
     }
 
     prop result: String {
         get() {
             if (!root.getOrThrow().truthValue) {
-                "${syntaxTree.name}(${link})"
+                "${link}"
             } else {
                 ""
             }
