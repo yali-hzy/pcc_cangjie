@@ -5,6 +5,7 @@ import pcc_cangjie.collection.{Link, Links, LinkType}
 import pcc_cangjie.logger.LOGGER
 import std.collection.{fold, ArrayList, filter, HashMap, forEach}
 import std.time.MonoTime
+import pcc_cangjie.defs.DebugInfo
 
 class EccListener <: CheckListener<Evaluator, Generator> {
     init() {
@@ -25,6 +26,7 @@ class EccMethod <: CheckMethod {
 
     public func handleAdd(cct: Cct, nodeList: ArrayList<Int>, contextId: Int, context: Context): Unit {
         // println("Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList}")
+        DebugInfo.reset()
         let time = MonoTime.now()
         cct.root = handleChange(cct.syntaxTree.root)
         let elapsed = MonoTime.now() - time
@@ -35,10 +37,12 @@ class EccMethod <: CheckMethod {
         LOGGER.getOrThrow().addDuration(elapsed)
         if (elapsed > Duration.millisecond * 100) {
             println("Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+            println(DebugInfo())
         }
     }
 
     public func handleDelete(cct: Cct, nodeList: ArrayList<Int>, contextId: Int): Unit {
+        DebugInfo.reset()
         let time = MonoTime.now()
         cct.root = handleChange(cct.syntaxTree.root)
         let elapsed = MonoTime.now() - time
@@ -49,6 +53,7 @@ class EccMethod <: CheckMethod {
         LOGGER.getOrThrow().addDuration(elapsed)
         if (elapsed > Duration.millisecond * 100) {
             println("Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+            println(DebugInfo())
         }
     }
 }
@@ -56,11 +61,17 @@ class EccMethod <: CheckMethod {
 open class EccEvaluator <: Evaluator {
     public func exitForall(node: ForallNode): Unit {
         // no Collection.fold in version 1.0.5
+        let startTime = MonoTime.now()
         node.truthValue = node.ctx2child.values() |> fold(true) {tv, child => tv && child.truthValue}
+        let elapsed = MonoTime.now() - startTime
+        DebugInfo.evaluateForallTime += elapsed
     }
 
     public func exitExists(node: ExistsNode): Unit {
+        let startTime = MonoTime.now()
         node.truthValue = node.ctx2child.values() |> fold(false) {tv, child => tv || child.truthValue}
+        let elapsed = MonoTime.now() - startTime
+        DebugInfo.evaluateExistsTime += elapsed
     }
 
     public func exitAnd(node: AndNode): Unit {
@@ -80,15 +91,19 @@ open class EccEvaluator <: Evaluator {
     }
 
     public func exitBfunc(node: BfuncNode): Unit {
+        let startTime = MonoTime.now()
         let map = node.assignments.map {x => x.collectHashMap()}.getOrDefault {=> HashMap<Int, Context>()}
         let bfunc = (node.syntaxTreeNode as BfuncSyntaxTreeNode).getOrThrow().bfunc
         node.truthValue = applyBfunc(bfunc.funcInfo, bfunc.argsId.map {argId => map[argId]})
+        let elapsed = MonoTime.now() - startTime
+        DebugInfo.evaluateBfuncTime += elapsed
         // println("Evaluating Bfunc ${bfunc.funcInfo} with arguments ${bfunc.argsId.map {argId => map[argId]}}: ${node.truthValue}")
     }
 }
 
 open class EccGenerator <: Generator {
     public func exitForall(node: ForallNode): Unit {
+        let startTime = MonoTime.now()
         let result = ArrayList<Link>()
         node.ctx2child.values() |> filter {child => !child.truthValue} |> forEach {
             child => result.add(
@@ -97,9 +112,12 @@ open class EccGenerator <: Generator {
                     .links)
         }
         node.links = Links(result)
+        let elapsed = MonoTime.now() - startTime
+        DebugInfo.generateForallTime += elapsed
     }
 
     public func exitExists(node: ExistsNode): Unit {
+        let startTime = MonoTime.now()
         let result = ArrayList<Link>()
         node.ctx2child.values() |> filter {child => child.truthValue} |> forEach {
             child => result.add(
@@ -108,6 +126,8 @@ open class EccGenerator <: Generator {
                     .links)
         }
         node.links = Links(result)
+        let elapsed = MonoTime.now() - startTime
+        DebugInfo.generateExistsTime += elapsed
     }
 
     public func exitAnd(node: AndNode): Unit {

@@ -6,6 +6,7 @@ import pcc_cangjie.logger.LOGGER
 import std.collection.ArrayList
 import std.sort.sort
 import std.time.MonoTime
+import pcc_cangjie.defs.DebugInfo
 
 interface PccEvaluatorListener <: Evaluator {
     func exitForall(node: ForallNode, newNode: CctNode): Unit
@@ -41,6 +42,7 @@ class PccMethod <: CheckMethod {
     }
 
     public func handleAdd(cct: Cct, nodeList: ArrayList<Int>, contextId: Int, context: Context): Unit {
+        DebugInfo.reset()
         let time = MonoTime.now()
         let sortedNodeList = nodeList.clone()
         sort(sortedNodeList, key: {nodeId => cct.syntaxTree.nodes[nodeId].depth}, descending: true)
@@ -55,10 +57,12 @@ class PccMethod <: CheckMethod {
         LOGGER.getOrThrow().addDuration(elapsed)
         if (elapsed > Duration.millisecond * 100) {
             println("Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+            println(DebugInfo())
         }
     }
 
     public func handleDelete(cct: Cct, nodeList: ArrayList<Int>, contextId: Int): Unit {
+        DebugInfo.reset()
         let time = MonoTime.now()
         let sortedNodeList = nodeList.clone()
         sort(sortedNodeList, key: {nodeId => cct.syntaxTree.nodes[nodeId].depth})
@@ -73,6 +77,7 @@ class PccMethod <: CheckMethod {
         LOGGER.getOrThrow().addDuration(elapsed)
         if (elapsed > Duration.millisecond * 100) {
             println("Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+            println(DebugInfo())
         }
     }
 }
@@ -191,6 +196,7 @@ class PccEvaluator <: EccEvaluator & PccEvaluatorListener {
 
 class PccGenerator <: EccGenerator & PccGeneratorListener {
     public func exitForall(node: ForallNode, newNode: CctNode): Unit {
+        let startTime = MonoTime.now()
         if (!newNode.truthValue) {
             node.links = node
                 .links
@@ -198,9 +204,12 @@ class PccGenerator <: EccGenerator & PccGeneratorListener {
                     Links(ArrayList([Link(LinkType.Violated, ArrayList([newNode.assignments.getOrThrow().assignment]))]))
                         .product(newNode.links))
         }
+        let elapsed = MonoTime.now() - startTime
+        DebugInfo.generateForallTime += elapsed
     }
 
     public func exitExists(node: ExistsNode, newNode: CctNode): Unit {
+        let startTime = MonoTime.now()
         if (newNode.truthValue) {
             node.links = node
                 .links
@@ -209,5 +218,7 @@ class PccGenerator <: EccGenerator & PccGeneratorListener {
                         ArrayList([Link(LinkType.Satisfied, ArrayList([newNode.assignments.getOrThrow().assignment]))]))
                         .product(newNode.links))
         }
+        let elapsed = MonoTime.now() - startTime
+        DebugInfo.generateExistsTime += elapsed
     }
 }

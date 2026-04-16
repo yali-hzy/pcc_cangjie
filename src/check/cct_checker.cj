@@ -125,9 +125,9 @@ public class CctChecker {
         // return
         sort(ctxChgList, stable: true)
         // println("Sorted context change list:")
-        let startTime = MonoTime.now()
-        var recorded = false
-        startCPUProfiling()
+        // let startTime = MonoTime.now()
+        // var recorded = false
+        // startCPUProfiling()
         for (item in ctxChgList) {
             // if (item.contextId == 3) {
             //     break
@@ -138,11 +138,11 @@ public class CctChecker {
                 case ContextChangeType.Add => ContextSets[item.patternId].offlineAdd(item.contextId, item.context)
                 case ContextChangeType.Delete => ContextSets[item.patternId].offlineDelete(item.contextId)
             }
-            if (!recorded && MonoTime.now() - startTime > Duration.second) {
-                let output = Path("./cpu_profile.txt").normalize()
-                stopCPUProfiling(output)
-                recorded = true
-            }
+            // if (!recorded && MonoTime.now() - startTime > Duration.second) {
+            //     let output = Path("./cpu_profile.txt").normalize()
+            //     stopCPUProfiling(output)
+            //     recorded = true
+            // }
         }
     }
 }
