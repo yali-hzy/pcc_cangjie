@@ -9,6 +9,7 @@ import std.sort.sort
 import std.time.MonoTime
 import std.runtime.*
 import std.fs.*
+import pcc_cangjie.logger.LOGGER
 
 public class CctChecker {
     let PatternNames2Id: HashMap<String, Int> = HashMap<String, Int>()
@@ -128,6 +129,7 @@ public class CctChecker {
         // let startTime = MonoTime.now()
         // var recorded = false
         // startCPUProfiling()
+        LOGGER.getOrThrow().start()
         for (item in ctxChgList) {
             // if (item.contextId == 3) {
             //     break

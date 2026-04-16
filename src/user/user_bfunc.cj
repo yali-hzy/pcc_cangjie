@@ -9,6 +9,17 @@ public class UserBfunc {
         return ctx1.timestamp - ctx2.timestamp <= Ttrans
     }
 
+    public static func taxiBfunc(name: String, args: Array<Context>): Bool {
+        match (name) {
+            case "same" => same(args[0], args[1])
+            case "sz_loc_range" => sz_loc_range(args[0])
+            case "sz_loc_close" => sz_loc_close(args[0], args[1])
+            case "sz_spd_close" => sz_spd_close(args[0], args[1])
+            case "sz_loc_dist" => sz_loc_dist(args[0], args[1])
+            case _ => throw IllegalArgumentException("Unknown Bfunc name: ${name}")
+        }
+    }
+
     public static func same(ctx1: Context, ctx2: Context): Bool {
         return ctx1.subject == ctx2.subject
     }

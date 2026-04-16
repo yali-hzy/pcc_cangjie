@@ -14,3 +14,7 @@ func getBfuncInfo(name: String, paramNum: Int): StaticFunctionInfo {
 func applyBfunc(funcInfo: StaticFunctionInfo, args: Array<Context>): Bool {
     (funcInfo.apply(userBfuncInfo, args.map {x => x}) as Bool).getOrThrow() // On purpose, avoid binding Array to Any
 }
+
+func applyBfunc(name: String, args: Array<Context>): Bool {
+    UserBfunc.taxiBfunc(name, args)
+}

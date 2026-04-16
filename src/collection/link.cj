@@ -6,8 +6,8 @@ import std.collection.{HashMap, ArrayList, map, collectArrayList, concat, flatMa
 public class AssignmentLinkedListNode {
     public AssignmentLinkedListNode(let prev: ?AssignmentLinkedListNode, public let assignment: Assignment) {}
 
-    public func collectHashMap(): HashMap<Int, Context> {
-        let map = HashMap<Int, Context>()
+    public func collectHashMap(capacity: Int): HashMap<Int, Context> {
+        let map = HashMap<Int, Context>(capacity)
         var current: ?AssignmentLinkedListNode = Some(this)
         while (let Some(node) <- current) {
             map[node.assignment.varId] = node.assignment.ctx
@@ -43,7 +43,10 @@ public class Link {
     }
 
     public func cartesian(other: Link): Link {
-        Link(linkType, bindings |> (other.bindings |> concat) |> collectArrayList)
+        let resultBindings = ArrayList<Assignment>(bindings)
+        resultBindings.add(all: other.bindings)
+        return Link(linkType, resultBindings)
+        // Link(linkType, bindings |> (other.bindings |> concat) |> collectArrayList)
     }
 }
 
@@ -51,7 +54,12 @@ public class Links {
     public Links(public let links: ArrayList<Link>) {}
 
     public func flipset(): Links {
-        Links(links |> map({link => link.flip()}) |> collectArrayList)
+        // Links(links |> map({link => link.flip()}) |> collectArrayList)
+        let flippedLinks = ArrayList<Link>(links)
+        for (link in flippedLinks) {
+            link.flip()
+        }
+        return Links(flippedLinks)
     }
 
     public func product(other: Links): Links {
@@ -61,11 +69,22 @@ public class Links {
         if (other.links.isEmpty()) {
             return this
         }
-        return Links(
-            links |> flatMap({link1 => other.links |> map({link2 => link1.cartesian(link2)})}) |> collectArrayList)
+        // return Links(
+        //     links |> flatMap({link1 => other.links |> map({link2 => link1.cartesian(link2)})}) |> collectArrayList)
+        let resultLinks = ArrayList<Link>()
+        for (link1 in links) {
+            for (link2 in other.links) {
+                let productLink = link1.cartesian(link2)
+                resultLinks.add(productLink)
+            }
+        }
+        return Links(resultLinks)
     }
 
     public func union(other: Links): Links {
-        Links(links |> (other.links |> concat) |> collectArrayList)
+        let resultLinks = ArrayList<Link>(links)
+        resultLinks.add(all: other.links)
+        return Links(resultLinks)
+        // Links(links |> (other.links |> concat) |> collectArrayList)
     }
 }

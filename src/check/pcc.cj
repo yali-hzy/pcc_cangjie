@@ -7,6 +7,8 @@ import std.collection.ArrayList
 import std.sort.sort
 import std.time.MonoTime
 import pcc_cangjie.defs.DebugInfo
+import pcc_cangjie.defs.{maxUsedHeapSize, maxAllocatedHeapSize}
+import std.runtime.{getUsedHeapSize, getAllocatedHeapSize}
 
 interface PccEvaluatorListener <: Evaluator {
     func exitForall(node: ForallNode, newNode: CctNode): Unit
@@ -59,6 +61,8 @@ class PccMethod <: CheckMethod {
             println("Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
             println(DebugInfo())
         }
+        maxUsedHeapSize = max(maxUsedHeapSize, getUsedHeapSize())
+        maxAllocatedHeapSize = max(maxAllocatedHeapSize, getAllocatedHeapSize())
     }
 
     public func handleDelete(cct: Cct, nodeList: ArrayList<Int>, contextId: Int): Unit {
@@ -79,6 +83,8 @@ class PccMethod <: CheckMethod {
             println("Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
             println(DebugInfo())
         }
+        maxUsedHeapSize = max(maxUsedHeapSize, getUsedHeapSize())
+        maxAllocatedHeapSize = max(maxAllocatedHeapSize, getAllocatedHeapSize())
     }
 }
 
