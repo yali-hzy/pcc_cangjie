@@ -58,7 +58,8 @@ class PccMethod <: CheckMethod {
         }
         LOGGER.getOrThrow().addDuration(elapsed)
         if (elapsed > Duration.millisecond * 100) {
-            println("Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+            println(
+                "Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
             println(DebugInfo())
         }
         maxUsedHeapSize = max(maxUsedHeapSize, getUsedHeapSize())
@@ -80,7 +81,8 @@ class PccMethod <: CheckMethod {
         }
         LOGGER.getOrThrow().addDuration(elapsed)
         if (elapsed > Duration.millisecond * 100) {
-            println("Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+            println(
+                "Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
             println(DebugInfo())
         }
         maxUsedHeapSize = max(maxUsedHeapSize, getUsedHeapSize())

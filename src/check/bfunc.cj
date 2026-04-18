@@ -16,5 +16,5 @@ func applyBfunc(funcInfo: StaticFunctionInfo, args: Array<Context>): Bool {
 }
 
 func applyBfunc(name: String, args: Array<Context>): Bool {
-    UserBfunc.taxiBfunc(name, args)
+    UserBfunc.userBfunc(name, args)
 }

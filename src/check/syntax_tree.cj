@@ -2,7 +2,7 @@ package pcc_cangjie.check
 
 import pcc_cangjie.defs.{Formula, Constraint}
 import std.collection.{HashMap, Map, ArrayList}
-import std.reflect.StaticFunctionInfo
+// import std.reflect.StaticFunctionInfo
 
 class SyntaxTreeBuilder {
     var id = -1
@@ -72,7 +72,8 @@ class SyntaxTreeBuilder {
             case Implies(lhs, rhs) => binaryHelper(NodeType.Implies, currentDfn, depth, parent, lhs, rhs)
             case Not(operand) => unaryHelper(NodeType.Not, currentDfn, depth, parent, operand)
             case Bfunc(name, args) => BfuncSyntaxTreeNode(currentDfn, depth, NodeType.Bfunc, parent,
-                BfuncInfo(getBfuncInfo(name, args.size), args.map {v => namedVar[v]}))
+                // BfuncInfo(getBfuncInfo(name, args.size), args.map {v => namedVar[v]}))
+                BfuncInfo(name, args.map {v => namedVar[v]}))
         }
         dfn2SyntaxNode[currentDfn] = syntaxTreeNode
         return syntaxTreeNode
@@ -95,7 +96,8 @@ class SyntaxTreeBuilder {
 }
 
 class BfuncInfo {
-    BfuncInfo(let funcInfo: StaticFunctionInfo, let argsId: Array<Int>) {}
+    // BfuncInfo(let funcInfo: StaticFunctionInfo, let argsId: Array<Int>) {}
+    BfuncInfo(let name: String, let argsId: Array<Int>) {}
 }
 
 abstract class SyntaxTreeNode <: ToString {
@@ -147,7 +149,8 @@ class BfuncSyntaxTreeNode <: SyntaxTreeNode {
 
     prop bfuncStr: String {
         get() {
-            return "${bfunc.funcInfo}(${bfunc.argsId})"
+            // return "${bfunc.funcInfo}(${bfunc.argsId})"
+            return "${bfunc.name}(${bfunc.argsId})"
         }
     }
 

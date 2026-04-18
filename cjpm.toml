@@ -1,9 +1,11 @@
 [package]
-  cjc-version = "1.0.5"
+  cjc-version = "1.1.0"
   name = "pcc_cangjie"
+  organization = ""
   description = "nothing here"
   version = "1.0.0"
   target-dir = ""
+  script-dir = ""
   output-type = "executable"
   compile-option = "-O2"
   override-compile-option = ""

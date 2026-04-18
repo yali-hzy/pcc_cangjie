@@ -56,13 +56,13 @@ public class CctChecker {
         }
         let syntaxTreeBuilder = SyntaxTreeBuilder(PatternNames2Id, PatternMap)
         // no Array.enumerate in version 1.0.5
-        CCTs = convertedConstraints |> enumerate |> map {
+        CCTs = convertedConstraints.enumerate().map {
             item =>
                 let (i, constraint) = item
                 let syntaxTree = syntaxTreeBuilder.build(i, constraint)
                 println("syntaxTree ${i}: ${syntaxTree.root}")
                 Cct(syntaxTree)
-        } |> collectArray
+        }
     }
 
     public func check(contexts: ContextFlow, method!: String): Unit {

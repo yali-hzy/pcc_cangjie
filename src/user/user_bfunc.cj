@@ -9,6 +9,13 @@ public class UserBfunc {
         return ctx1.timestamp - ctx2.timestamp <= Ttrans
     }
 
+    public static func userBfunc(name: String, args: Array<Context>): Bool {
+        match (name) {
+            case "WithinTrans" => WithinTrans(args[0], args[1])
+            case _ => taxiBfunc(name, args)
+        }
+    }
+
     public static func taxiBfunc(name: String, args: Array<Context>): Bool {
         match (name) {
             case "same" => same(args[0], args[1])

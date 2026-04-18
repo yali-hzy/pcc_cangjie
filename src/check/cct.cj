@@ -102,7 +102,8 @@ class Cct {
             // str.append("No links")
             } else {
                 for (link in links) {
-                    linkstr.add("${syntaxTree.name}(${links[0].linkType},{${link.bindings |> map {assignment => "(${syntaxTree.dfn2VarName[assignment.varId]}, ${assignment.ctx.id})"} |> collectString(delimiter: ",")}})")
+                    linkstr.add(
+                        "${syntaxTree.name}(${links[0].linkType},{${link.bindings.map {assignment => "(${syntaxTree.dfn2VarName[assignment.varId]}, ${assignment.ctx.id})"} |> collectString(delimiter: ",")}})")
                 }
             }
             return linkstr

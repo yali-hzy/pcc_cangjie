@@ -81,6 +81,7 @@ open class EccEvaluator <: Evaluator {
         // }
 
         node.truthValue = !any {child => !child.truthValue}(node.ctx2child.values())
+        // node.truthValue = !node.ctx2child.values().iterator().any {child => !child.truthValue}
         let elapsed = MonoTime.now() - startTime
         DebugInfo.evaluateIterateCount += node.ctx2child.size
         DebugInfo.evaluateIterateCapacity += node.ctx2child.capacity
@@ -101,6 +102,7 @@ open class EccEvaluator <: Evaluator {
         //     }
         // }
         node.truthValue = any {child => child.truthValue}(node.ctx2child.values())
+        // node.truthValue = node.ctx2child.values().iterator().any {child => child.truthValue}
         let elapsed = MonoTime.now() - startTime
         DebugInfo.evaluateIterateCount += node.ctx2child.size
         DebugInfo.evaluateIterateCapacity += node.ctx2child.capacity
@@ -133,7 +135,8 @@ open class EccEvaluator <: Evaluator {
             .getOrDefault {=> HashMap<Int, Context>()}
         let bfunc = (node.syntaxTreeNode as BfuncSyntaxTreeNode).getOrThrow().bfunc
         // node.truthValue = applyBfunc(bfunc.funcInfo, bfunc.argsId.map {argId => map[argId]})
-        node.truthValue = applyBfunc(bfunc.funcInfo.name, bfunc.argsId.map {argId => map[argId]})
+        // node.truthValue = applyBfunc(bfunc.funcInfo.name, bfunc.argsId.map {argId => map[argId]})
+        node.truthValue = applyBfunc(bfunc.name, bfunc.argsId.map {argId => map[argId]})
         let elapsed = MonoTime.now() - startTime
         DebugInfo.evaluateBfuncTime += elapsed
         // println("Evaluating Bfunc ${bfunc.funcInfo} with arguments ${bfunc.argsId.map {argId => map[argId]}}: ${node.truthValue}")
