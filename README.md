@@ -2,7 +2,10 @@
 
 一个基于仓颉语言实现的部分约束检查系统。
 
-项目从事件上下文流中读取数据，依据 `patterns.xml` 与 `constraints.xml` 构造检查逻辑，并使用不同检查方法（ECC/PCC）对约束进行在线验证。
+项目从事件上下文流中读取数据，依据 `patterns.xml` 与 `constraints.xml` 构造检查逻辑，并使用不同检查方法（ECC/PCC）对约束进行验证。当前支持两种运行模式：
+
+- 在线模式：按时间间隔注入上下文并在新鲜度窗口内自动过期
+- 离线模式：按时间线批量回放上下文的新增/删除事件，不依赖实时定时器
 
 ## 主要功能
 
@@ -10,6 +13,7 @@
 - 支持约束公式解析（`forall`、`exists`、`and`、`or`、`implies`、`not`、`bfunc`）
 - 支持公式转换策略：`kernel`、`notleaf`、`none`，分别代表核心转换（仅含`forall`, `and`, `not`, `bfunc`），非叶子节点转换（`not`节点仅出现在最底层，即只含`not(bfunc)`），以及不转换
 - 支持检查方法：`ecc`、`pcc`
+- 支持离线检测：通过 `--offline` 启用，支持自定义 `--context`、`--pattern`、`--constraint` 输入文件
 - 支持通过 `freshness` 与 `interval` 控制时效窗口与事件注入节奏
 - 支持自定义布尔函数（BFunc），当前示例为 `WithinTrans`
 
@@ -33,6 +37,18 @@ cjpm run --run-args "--data data/smoke --freshness 2"
 - 将 freshness 设置为 `2` 秒
 - 其余参数使用默认值
 
+离线模式示例（以你当前数据组织方式为例）：
+
+```bash
+cjpm run --run-args "--data data/data_with_link_oracles --context data/data_1/0-1.txt --pattern consistency_patterns_48.xml --constraint consistency_rules_48.xml --convert none --offline --outdir link_oracle/data_1 --outfile 0-1_answer_pcc.txt --method pcc"
+```
+
+说明：
+
+- `--offline` 启用离线检测路径
+- `--context`、`--pattern`、`--constraint` 都是相对于 `--data` 的路径
+- 离线模式下会按上下文时间戳生成 Add/Delete 事件并排序后依次处理
+
 ## 命令行参数
 
 程序入口支持以下参数（长选项）：
@@ -40,17 +56,29 @@ cjpm run --run-args "--data data/smoke --freshness 2"
 | 参数 | 是否必需 | 默认值 | 说明 |
 | --- | --- | --- | --- |
 | `--data` | 是 | 无 | 数据目录路径，目录内需包含 `contexts.txt`、`patterns.xml`、`constraints.xml` |
+| `--context` | 否 | `context.txt` | 离线模式下的上下文文件路径（相对于 `--data`） |
+| `--pattern` | 否 | `patterns.xml` | 离线模式下的模式文件路径（相对于 `--data`） |
+| `--constraint` | 否 | `constraints.xml` | 离线模式下的约束文件路径（相对于 `--data`） |
 | `--convert` | 否 | `kernel` | 公式转换策略，可选：`kernel`、`notleaf`、`none` |
 | `--method` | 否 | `ecc` | 检查方法，可选：`ecc`、`pcc` |
 | `--freshness` | 否 | `20` | 上下文新鲜度窗口（秒） |
 | `--outdir` | 否 | `log` | 日志输出目录 |
+| `--outfile` | 否 | `context_check_{convert}_{method}_{freshness}_{interval}.log` | 输出文件名 |
 | `--interval` | 否 | `400` | 上下文流注入间隔（毫秒） |
 | `--start_time` | 否 | 第一条上下文的时间戳 | 模拟起始时间戳（Unix 时间戳，秒） |
+| `--offline` | 否 | 不启用 | 启用离线检测模式（存在该参数即启用） |
 
 完整示例：
 
 ```bash
 cjpm run --run-args "--data data/smoke --convert kernel --method ecc --freshness 20 --interval 400 --outdir log"
+```
+
+Windows CMD 下可选 GC 相关环境变量（用于大数据离线回放时降低内存压力）：
+
+```cmd
+set cjRegionSize=2048kb
+set cjHeapSize=15gb
 ```
 
 ## 输入数据格式
@@ -136,7 +164,7 @@ object movement, case5, reach, dock3, at 1181269080, warehouse4, 1181269080
 
 - 运行时会打印约束和匹配信息
 - 日志文件输出到 `--outdir` 指定目录
-- 日志文件名格式：
+- 若未传 `--outfile`，日志文件名格式为：
 
 ```txt
 context_check_{convert}_{method}_{freshness}_{interval}.log

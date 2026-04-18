@@ -54,10 +54,9 @@ public class Links {
     public Links(public let links: ArrayList<Link>) {}
 
     public func flipset(): Links {
-        // Links(links |> map({link => link.flip()}) |> collectArrayList)
-        let flippedLinks = ArrayList<Link>(links)
-        for (link in flippedLinks) {
-            link.flip()
+        let flippedLinks = ArrayList<Link>(links.size)
+        for (link in links) {
+            flippedLinks.add(link.flip())
         }
         return Links(flippedLinks)
     }

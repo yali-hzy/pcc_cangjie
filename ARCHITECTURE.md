@@ -28,6 +28,7 @@
 
 - 支持声明式约束表达（量词 + 逻辑连接 + 自定义布尔函数）
 - 支持上下文添加与过期删除
+- 支持在线/离线两种运行形态（实时注入与离线回放）
 - 支持不同检查策略（ECC与PCC）
 - 支持可配置的数据输入、新鲜度需求和日志输出位置
 
@@ -51,14 +52,18 @@ flowchart TD
     C --> D[约束转换 convert.cj]
     D --> E[SyntaxTreeBuilder]
     E --> F[CctChecker 初始化]
-    F --> G[ContextFlow 定时注入]
-    G --> H[ContextSet add/delete]
-    H --> I{CheckMethod}
-    I -->|ecc| J[EccMethod 全量重建]
-    I -->|pcc| K[PccMethod 增量调整]
-    J --> L[输出 truth value + links]
-    K --> L
-    L --> M[Logger]
+  F --> G{运行模式}
+  G -->|online| H[ContextFlow 定时注入]
+  H --> I[ContextSet add/delete]
+  G -->|offline| J[生成并排序 Add/Delete 变化序列]
+  J --> K[ContextSet offlineAdd/offlineDelete]
+  I --> L{CheckMethod}
+  K --> L
+  L -->|ecc| M[EccMethod 全量重建]
+  L -->|pcc| N[PccMethod 增量调整]
+  M --> O[输出 truth value + links]
+  N --> O
+  O --> P[Logger]
 ```
 
 ## 3. 分层与模块职责
@@ -256,7 +261,31 @@ sequenceDiagram
     CS->>CM: handleDelete(...)
 ```
 
-### 5.3 ECC 与 PCC 差异
+  ### 5.3 离线运行阶段（新增）
+
+  ```mermaid
+  sequenceDiagram
+    participant M as main
+    participant CK as CctChecker
+    participant CS as ContextSet
+    participant CM as CheckMethod
+
+    M->>CK: check(contexts:Array<Context>, method)
+    CK->>CK: 为每个匹配生成 Add/Delete 变化项
+    CK->>CK: 按时间戳稳定排序
+    loop 按序处理变化项
+      CK->>CS: offlineAdd / offlineDelete
+      CS->>CM: handleAdd / handleDelete
+    end
+  ```
+
+  离线模式关键点：
+
+  - 不依赖 `ContextFlow` 和 `Timer.once`，而是一次性生成变化序列后按时间顺序回放
+  - `freshness` 由各 Pattern 的 freshness 字段决定删除时间（Add 时间 + Pattern freshness）
+  - 同样复用 ECC/PCC 两套检查逻辑，差异仅在上下文变化的驱动方式
+
+  ### 5.4 ECC 与 PCC 差异
 
 #### ECC（[src/check/ecc.cj](src/check/ecc.cj)）
 
@@ -272,17 +301,17 @@ sequenceDiagram
 - add 时调用 CctBuilder 仅构建“新上下文对应的量词体子树”，再并入 ctx2child
 - delete 时不重建子树，直接移除 ctx2child 后向上重算聚合节点
 
-### 5.4 CctBuilder 与 ECC/PCC 的协作机制
+### 5.5 CctBuilder 与 ECC/PCC 的协作机制
 
 这一节从“调用时机、构建粒度、状态写入”三个角度说明二者关系。
 
-#### 5.4.1 调用时机
+#### 5.5.1 调用时机
 
 - ECC：每次 handleAdd/handleDelete 都调用 `cctBuilder.build(cct.syntaxTree.root)`
 - PCC（冷启动）：当 `cct.root` 为空时，仍调用 `cctBuilder.build(cct.syntaxTree.root)`
 - PCC（增量 add）：调用 `cctBuilder.build(node.syntaxTreeNode.children[0], parent: node, ctx: context)`
 
-#### 5.4.2 构建粒度
+#### 5.5.2 构建粒度
 
 - ECC：全量构建
 - ECC 输入是根节点，输出是完整新根，旧 root 被整体替换
@@ -292,14 +321,14 @@ sequenceDiagram
 - PCC 输出是该量词的一个新 child 分支
 - 新分支写入 `QuantifierNode.ctx2child[contextId]`
 
-#### 5.4.3 状态写入与重算范围
+#### 5.5.3 状态写入与重算范围
 
 - ECC：CctBuilder 直接产出完整树状态，Logger 记录“全树重算后”的结果快照
 
 - PCC：CctBuilder 只负责“新增那一支”的节点状态
 - PCC：祖先节点通过 adjustHelper 向上触发 Listener 做聚合重算
 
-#### 5.4.4 两种路径的伪代码对照
+#### 5.5.4 两种路径的伪代码对照
 
 ECC：
 
@@ -367,6 +396,11 @@ PatternMap 结构为：
 - 主循环收到 POISON_CONTEXT 后，等待“新增/删除处理数相等”再退出
 
 这保证了在程序结束前，所有已注入的上下文都被正确处理，且日志记录了完整的检查结果。
+
+补充：在线/离线模式在一致性机制上的差异
+
+- 在线模式：由 `ContextFlow + Timer.once` 驱动，依赖互斥锁与条件变量协调 Add/Delete 计数
+- 离线模式：单线程顺序处理排序后的变化项，不经过 `Timer.once` 与结束条件等待逻辑
 
 ## 8. 可扩展性设计
 
