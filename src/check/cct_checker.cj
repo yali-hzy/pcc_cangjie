@@ -26,14 +26,14 @@ public class CctChecker {
     }
 
     func validateName(patterns: Array<Pattern>, constraints: Array<Constraint>) {
-        for ((i, pattern) in enumerate(patterns)) {
+        for ((i, pattern) in patterns.enumerate()) {
             if (PatternNames2Id.contains(pattern.name)) {
                 throw DuplicateNameException("Duplicate pattern name '${pattern.name}' found in patterns list")
             } else {
                 PatternNames2Id[pattern.name] = i
             }
         }
-        for ((i, constraint) in enumerate(constraints)) {
+        for ((i, constraint) in constraints.enumerate()) {
             if (ConstraintNames2Id.contains(constraint.name)) {
                 throw DuplicateNameException("Duplicate constraint name '${constraint.name}' found in constraints list")
             } else {
@@ -83,7 +83,7 @@ public class CctChecker {
                 break
             }
             n++
-            for ((i, pattern) in enumerate(patterns)) {
+            for ((i, pattern) in patterns.enumerate()) {
                 if (pattern.matches(context)) {
                     println("Context matches pattern: ${pattern}")
                     ContextSets[i].add(n, context)
@@ -101,9 +101,9 @@ public class CctChecker {
             case _ => throw IllegalArgumentException("Unsupported check method: ${method}")
         }
         let ctxChgList = ArrayList<CtxChangeItem>(contexts.size)
-        for ((num, context) in enumerate(contexts)) {
+        for ((num, context) in contexts.enumerate()) {
             context.id = (num + 1).toString()
-            for ((i, pattern) in enumerate(patterns)) {
+            for ((i, pattern) in patterns.enumerate()) {
                 // if (context.id == "2772" || context.id == "4064") {
                 //     DEBUG = true
                 // }

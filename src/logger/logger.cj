@@ -41,7 +41,7 @@ public class Logger <: Resource {
         // print(msg)
         if (!message.isEmpty() && !linkSet.contains(message)) {
             logFile.write("${message}\n".toArray())
-            println(message)
+            // println(message)
             linkSet.add(message)
         }
     }
