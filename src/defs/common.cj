@@ -21,6 +21,10 @@ public class DebugInfo <: ToString {
     public static var gcFreedSize: Int = 0
     public static var evaluateMaxIterateSize: Int = 0
     public static var evaluateMaxIterateCapacity: Int = 0
+    public static var quantifierHelperIterateTime: Duration = Duration.Zero
+    public static var otherTime: Duration = Duration.Zero
+    public static var listenerTime: Duration = Duration.Zero
+    public static var assignmentTime: Duration = Duration.Zero
 
     public static func reset(): Unit {
         generateTime = Duration.Zero
@@ -38,6 +42,10 @@ public class DebugInfo <: ToString {
         gcFreedSize = getGCFreedSize()
         evaluateMaxIterateSize = 0
         evaluateMaxIterateCapacity = 0
+        quantifierHelperIterateTime = Duration.Zero
+        otherTime = Duration.Zero
+        listenerTime = Duration.Zero
+        assignmentTime = Duration.Zero
     }
 
     public func toString(): String {
@@ -61,6 +69,10 @@ public class DebugInfo <: ToString {
         sb.append("  evaluateMaxIterateSize: ${evaluateMaxIterateSize}\n")
         sb.append("  evaluateMaxIterateCapacity: ${evaluateMaxIterateCapacity}\n")
         sb.append("  getAllocatedHeapSize: ${getAllocatedHeapSize()}\n")
+        sb.append("  quantifierHelperIterateTime: ${quantifierHelperIterateTime}\n")
+        sb.append("  otherTime: ${otherTime}\n")
+        sb.append("  listenerTime: ${listenerTime}\n")
+        sb.append("  assignmentTime: ${assignmentTime}\n")
         return sb.toString()
     }
 }

@@ -15,6 +15,20 @@ public class AssignmentLinkedListNode {
         }
         return map
     }
+
+    private static let _hashMap = HashMap<Int, Context>()
+    public func collectArray(argsId: Array<Int>): Array<Context> {
+        let arr = Array<Context>(argsId.size, repeat: Context())
+        var current: ?AssignmentLinkedListNode = Some(this)
+        while (let Some(node) <- current) {
+            _hashMap[node.assignment.varId] = node.assignment.ctx
+            current = node.prev
+        }
+        for ((i, varId) in argsId.enumerate()) {
+            arr[i] = _hashMap[varId]
+        }
+        return arr
+    }
 }
 
 public class Assignment {

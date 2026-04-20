@@ -129,14 +129,25 @@ open class EccEvaluator <: Evaluator {
 
     public func exitBfunc(node: BfuncNode): Unit {
         let startTime = MonoTime.now()
-        let map = node
-            .assignments
-            .map {x => x.collectHashMap(node.syntaxTreeNode.depth)}
-            .getOrDefault {=> HashMap<Int, Context>()}
+        // let map = node
+        //     .assignments
+        //     .map {x => x.collectHashMap(node.syntaxTreeNode.depth)}
+        //     .getOrDefault {=> HashMap<Int, Context>()}
+        let map = if (let Some(assignments) <- node.assignments) {
+            assignments.collectHashMap(node.syntaxTreeNode.depth)
+        } else {
+            HashMap<Int, Context>()
+        }
         let bfunc = (node.syntaxTreeNode as BfuncSyntaxTreeNode).getOrThrow().bfunc
         // node.truthValue = applyBfunc(bfunc.funcInfo, bfunc.argsId.map {argId => map[argId]})
         // node.truthValue = applyBfunc(bfunc.funcInfo.name, bfunc.argsId.map {argId => map[argId]})
         node.truthValue = applyBfunc(bfunc.name, bfunc.argsId.map {argId => map[argId]})
+        // let ctxArr = if (let Some(assignments) <- node.assignments) {
+        //     assignments.collectArray(bfunc.argsId)
+        // } else {
+        //     Array<Context>()
+        // }
+        // node.truthValue = applyBfunc(bfunc.name, ctxArr)
         let elapsed = MonoTime.now() - startTime
         DebugInfo.evaluateBfuncTime += elapsed
         // println("Evaluating Bfunc ${bfunc.funcInfo} with arguments ${bfunc.argsId.map {argId => map[argId]}}: ${node.truthValue}")
