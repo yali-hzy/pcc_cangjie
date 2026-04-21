@@ -8,21 +8,22 @@ import pcc_cangjie.defs.DebugInfo
 
 class CctBuilder {
     let listener = EccListener()
+    var bindings = HashMap<Int, Context>()
 
     CctBuilder(let checker: CctChecker) {}
 
-    private func makeAssignment(existing: ?AssignmentLinkedListNode, newAssignment: ?Assignment): ?AssignmentLinkedListNode {
-        match (newAssignment) {
-            case None => existing
-            case Some(assignment) => AssignmentLinkedListNode(existing, assignment)
-        }
-    }
+    // private func makeAssignment(existing: ?AssignmentLinkedListNode, newAssignment: ?Assignment): ?AssignmentLinkedListNode {
+    //     match (newAssignment) {
+    //         case None => existing
+    //         case Some(assignment) => AssignmentLinkedListNode(existing, assignment)
+    //     }
+    // }
 
-    private func quantifierHelper(refNode: QuantifierSyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
+    private func quantifierHelper(refNode: QuantifierSyntaxTreeNode, assignment: ?Assignment) {
         let startTime = MonoTime.now()
         let cctNode: QuantifierNode = match (refNode.nodeType) {
-            case Forall => ForallNode(refNode, assignments)
-            case Exists => ExistsNode(refNode, assignments)
+            case Forall => ForallNode(refNode, assignment)
+            case Exists => ExistsNode(refNode, assignment)
             case _ => throw IllegalArgumentException("Expected a quantifier node, but got ${refNode.nodeType}")
         }
         let patternNo = refNode.patternNo
@@ -34,55 +35,66 @@ class CctBuilder {
             var startTime = MonoTime.now()
             var endTime = MonoTime.now()
             for ((contextId, (context, _)) in checker.ContextSets[patternNo].contextSet) {
+                let oldValue = bindings.add(refNode.dfn, context)
                 endTime = MonoTime.now()
                 DebugInfo.quantifierHelperIterateTime += endTime - startTime
                 let child = buildHelper(refNode.children[0], cctNode, Assignment(refNode.dfn, context))
                 startTime = MonoTime.now()
                 cctNode.ctx2child[contextId] = child
+                if (let Some(old) <- oldValue) {
+                    bindings[refNode.dfn] = old
+                } else {
+                    bindings.remove(refNode.dfn)
+                }
             }
         }
         return cctNode
     }
 
-    private func nonleafHelper(refNode: SyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
+    private func nonleafHelper(refNode: SyntaxTreeNode, assignment: ?Assignment) {
         let startTime = MonoTime.now()
         let cctNode: NonleafNode = match (refNode.nodeType) {
-            case And => AndNode(refNode, assignments)
-            case Or => OrNode(refNode, assignments)
-            case Implies => ImpliesNode(refNode, assignments)
-            case Not => NotNode(refNode, assignments)
+            case And => AndNode(refNode, assignment)
+            case Or => OrNode(refNode, assignment)
+            case Implies => ImpliesNode(refNode, assignment)
+            case Not => NotNode(refNode, assignment)
             case _ => throw IllegalArgumentException("Unexpected node type ${refNode.nodeType} in binaryHelper")
         }
         let endTime = MonoTime.now()
         DebugInfo.otherTime += endTime - startTime
         cctNode.children = refNode.children.map {child => buildHelper(child, cctNode, None)}
+        // let children = ArrayList<CctNode>(2)
+        // for (child in refNode.children) {
+        //     children.add(buildHelper(child, cctNode, None))
+        // }
+        // cctNode.children = children.toArray()
         return cctNode
     }
 
     private func buildHelper(refNode: SyntaxTreeNode, parent: ?CctNode, assignment: ?Assignment): CctNode {
-        let startTime = MonoTime.now()
+        // let startTime = MonoTime.now()
         // let assignments = makeAssignment(parent.flatMap {x => x.assignments}, assignment)
-        var assignments: ?AssignmentLinkedListNode = None
-        if (let Some(assign) <- assignment) {
-            if (let Some(p) <- parent) {
-                assignments = AssignmentLinkedListNode(p.assignments, assign)
-            } else {
-                assignments = AssignmentLinkedListNode(None, assign)
-            }
-        } else {
-            if (let Some(p) <- parent) {
-                assignments = p.assignments
-            } else {
-                assignments = None
-            }
-        }
+        // var assignments: ?AssignmentLinkedListNode = None
+        // if (let Some(assign) <- assignment) {
+        //     if (let Some(p) <- parent) {
+        //         assignments = AssignmentLinkedListNode(p.assignments, assign)
+        //     } else {
+        //         assignments = AssignmentLinkedListNode(None, assign)
+        //     }
+        // } else {
+        //     if (let Some(p) <- parent) {
+        //         assignments = p.assignments
+        //     } else {
+        //         assignments = None
+        //     }
+        // }
         let end1Time = MonoTime.now()
-        DebugInfo.assignmentTime += end1Time - startTime
+        // DebugInfo.assignmentTime += end1Time - startTime
         match (refNode.nodeType) {
             case Forall | Exists =>
                 let endTime = MonoTime.now()
                 DebugInfo.otherTime += endTime - end1Time
-                let cctNode = quantifierHelper((refNode as QuantifierSyntaxTreeNode).getOrThrow(), assignments)
+                let cctNode = quantifierHelper((refNode as QuantifierSyntaxTreeNode).getOrThrow(), assignment)
                 let endTime2 = MonoTime.now()
                 match (refNode.nodeType) {
                     case Forall => listener.exitForall((cctNode as ForallNode).getOrThrow())
@@ -96,7 +108,7 @@ class CctBuilder {
             case And | Or | Implies | Not =>
                 let endTime = MonoTime.now()
                 DebugInfo.otherTime += endTime - end1Time
-                let cctNode = nonleafHelper(refNode, assignments)
+                let cctNode = nonleafHelper(refNode, assignment)
                 let endTime2 = MonoTime.now()
                 match (refNode.nodeType) {
                     case And => listener.exitAnd((cctNode as AndNode).getOrThrow())
@@ -109,16 +121,17 @@ class CctBuilder {
                 DebugInfo.listenerTime += endTime3 - endTime2
                 return cctNode
             case Bfunc =>
-                let cctNode = BfuncNode(refNode, assignments)
+                let cctNode = BfuncNode(refNode, assignment)
                 let endTime = MonoTime.now()
                 DebugInfo.otherTime += endTime - end1Time
-                listener.exitBfunc(cctNode)
+                listener.exitBfunc(cctNode, bindings)
                 // println(cctNode.truthValue)
                 return cctNode
         }
     }
 
-    func build(refNode: SyntaxTreeNode, parent!: ?CctNode = None, ctx!: Context = Context.POISON_CONTEXT): CctNode {
+    func build(refNode: SyntaxTreeNode, parent!: ?CctNode = None, ctx!: Context = Context.POISON_CONTEXT, bindings!: HashMap<Int, Context> = HashMap<Int, Context>()): CctNode {
+        this.bindings = bindings
         match (parent) {
             case None => buildHelper(refNode, None, None)
             case Some(p) => buildHelper(refNode, p, Assignment(p.syntaxTreeNode.dfn, ctx))
@@ -167,61 +180,61 @@ abstract class CctNode {
     var truthValue = false
     var links: Links = Links(ArrayList())
 
-    CctNode(let syntaxTreeNode: SyntaxTreeNode, let assignments: ?AssignmentLinkedListNode) {}
+    CctNode(let syntaxTreeNode: SyntaxTreeNode, let assignment: ?Assignment) {}
 }
 
 abstract class QuantifierNode <: CctNode {
     let ctx2child = HashMap<Int, CctNode>()
-    init(syntaxTreeNode: SyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
-        super(syntaxTreeNode, assignments)
+    init(syntaxTreeNode: SyntaxTreeNode, assignment: ?Assignment) {
+        super(syntaxTreeNode, assignment)
     }
 }
 
 abstract class NonleafNode <: CctNode {
     var children: Array<CctNode> = []
-    init(syntaxTreeNode: SyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
-        super(syntaxTreeNode, assignments)
+    init(syntaxTreeNode: SyntaxTreeNode, assignment: ?Assignment) {
+        super(syntaxTreeNode, assignment)
     }
 }
 
 class ForallNode <: QuantifierNode {
-    init(syntaxTreeNode: SyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
-        super(syntaxTreeNode, assignments)
+    init(syntaxTreeNode: SyntaxTreeNode, assignment: ?Assignment) {
+        super(syntaxTreeNode, assignment)
     }
 }
 
 class ExistsNode <: QuantifierNode {
-    init(syntaxTreeNode: SyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
-        super(syntaxTreeNode, assignments)
+    init(syntaxTreeNode: SyntaxTreeNode, assignment: ?Assignment) {
+        super(syntaxTreeNode, assignment)
     }
 }
 
 class AndNode <: NonleafNode {
-    init(syntaxTreeNode: SyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
-        super(syntaxTreeNode, assignments)
+    init(syntaxTreeNode: SyntaxTreeNode, assignment: ?Assignment) {
+        super(syntaxTreeNode, assignment)
     }
 }
 
 class OrNode <: NonleafNode {
-    init(syntaxTreeNode: SyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
-        super(syntaxTreeNode, assignments)
+    init(syntaxTreeNode: SyntaxTreeNode, assignment: ?Assignment) {
+        super(syntaxTreeNode, assignment)
     }
 }
 
 class ImpliesNode <: NonleafNode {
-    init(syntaxTreeNode: SyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
-        super(syntaxTreeNode, assignments)
+    init(syntaxTreeNode: SyntaxTreeNode, assignment: ?Assignment) {
+        super(syntaxTreeNode, assignment)
     }
 }
 
 class NotNode <: NonleafNode {
-    init(syntaxTreeNode: SyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
-        super(syntaxTreeNode, assignments)
+    init(syntaxTreeNode: SyntaxTreeNode, assignment: ?Assignment) {
+        super(syntaxTreeNode, assignment)
     }
 }
 
 class BfuncNode <: CctNode {
-    init(syntaxTreeNode: SyntaxTreeNode, assignments: ?AssignmentLinkedListNode) {
-        super(syntaxTreeNode, assignments)
+    init(syntaxTreeNode: SyntaxTreeNode, assignment: ?Assignment) {
+        super(syntaxTreeNode, assignment)
     }
 }

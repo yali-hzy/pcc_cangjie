@@ -1,5 +1,8 @@
 package pcc_cangjie.check
 
+import std.collection.HashMap
+import pcc_cangjie.defs.Context
+
 interface ExitListener {
     func exitForall(node: ForallNode): Unit
     func exitExists(node: ExistsNode): Unit
@@ -7,7 +10,7 @@ interface ExitListener {
     func exitOr(node: OrNode): Unit
     func exitImplies(node: ImpliesNode): Unit
     func exitNot(node: NotNode): Unit
-    func exitBfunc(node: BfuncNode): Unit
+    func exitBfunc(node: BfuncNode, bindings: HashMap<Int, Context>): Unit
 }
 
 interface Evaluator <: ExitListener {}
@@ -47,8 +50,8 @@ abstract class CheckListener<E, G> <: ExitListener where E <: Evaluator, G <: Ge
         generator.exitNot(node)
     }
 
-    public func exitBfunc(node: BfuncNode): Unit {
-        evaluator.exitBfunc(node)
-        generator.exitBfunc(node)
+    public func exitBfunc(node: BfuncNode, bindings: HashMap<Int, Context>): Unit {
+        evaluator.exitBfunc(node, bindings)
+        generator.exitBfunc(node, bindings)
     }
 }

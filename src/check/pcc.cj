@@ -3,7 +3,7 @@ package pcc_cangjie.check
 import pcc_cangjie.defs.{Context, ContextChangeType}
 import pcc_cangjie.collection.{Links, Link, LinkType}
 import pcc_cangjie.logger.LOGGER
-import std.collection.ArrayList
+import std.collection.{ArrayList, HashMap}
 import std.sort.sort
 import std.time.MonoTime
 import pcc_cangjie.defs.DebugInfo
@@ -97,6 +97,7 @@ class PccAdjuster {
     var contextId: Int = -1
     var context: Context = Context.POISON_CONTEXT
     var contextChangeType: ContextChangeType = ContextChangeType.Add
+    var bindings = HashMap<Int, Context>()
 
     PccAdjuster(let cctBuilder: CctBuilder) {}
 
@@ -127,7 +128,8 @@ class PccAdjuster {
             match (node) {
                 case node: QuantifierNode => match (contextChangeType) {
                     case ContextChangeType.Add =>
-                        let newNode = cctBuilder.build(node.syntaxTreeNode.children[0], parent: node, ctx: context)
+                        let oldValue = bindings.add(node.syntaxTreeNode.dfn, context)
+                        let newNode = cctBuilder.build(node.syntaxTreeNode.children[0], parent: node, ctx: context, bindings: bindings)
                         match (node) {
                             case forallNode: ForallNode => listener.exitForall(forallNode, newNode)
                             case existsNode: ExistsNode => listener.exitExists(existsNode, newNode)
@@ -135,6 +137,11 @@ class PccAdjuster {
                                 "Unexpected quantifier node type ${node.syntaxTreeNode.nodeType}")
                         }
                         node.ctx2child[contextId] = newNode
+                        if (let Some(old) <- oldValue) {
+                            bindings[node.syntaxTreeNode.dfn] = old
+                        } else {
+                            bindings.remove(node.syntaxTreeNode.dfn)
+                        }
                     case ContextChangeType.Delete =>
                         node.ctx2child.remove(contextId)
                         match (node) {
@@ -151,7 +158,13 @@ class PccAdjuster {
             match (node) {
                 case node: QuantifierNode =>
                     for ((_, child) in node.ctx2child) {
+                        let oldValue = bindings.add(node.syntaxTreeNode.dfn, child.assignment.getOrThrow().ctx)
                         adjustHelper(child)
+                        if (let Some(old) <- oldValue) {
+                            bindings[node.syntaxTreeNode.dfn] = old
+                        } else {
+                            bindings.remove(node.syntaxTreeNode.dfn)
+                        }
                     }
                     match (node) {
                         case forallNode: ForallNode => listener.exitForall(forallNode)
@@ -209,7 +222,7 @@ class PccGenerator <: EccGenerator & PccGeneratorListener {
             node.links = node
                 .links
                 .union(
-                    Links(ArrayList([Link(LinkType.Violated, ArrayList([newNode.assignments.getOrThrow().assignment]))]))
+                    Links(ArrayList([Link(LinkType.Violated, ArrayList([newNode.assignment.getOrThrow()]))]))
                         .product(newNode.links))
         }
         let elapsed = MonoTime.now() - startTime
@@ -223,7 +236,7 @@ class PccGenerator <: EccGenerator & PccGeneratorListener {
                 .links
                 .union(
                     Links(
-                        ArrayList([Link(LinkType.Satisfied, ArrayList([newNode.assignments.getOrThrow().assignment]))]))
+                        ArrayList([Link(LinkType.Satisfied, ArrayList([newNode.assignment.getOrThrow()]))]))
                         .product(newNode.links))
         }
         let elapsed = MonoTime.now() - startTime

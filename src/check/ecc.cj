@@ -127,21 +127,21 @@ open class EccEvaluator <: Evaluator {
         node.truthValue = !node.children[0].truthValue
     }
 
-    public func exitBfunc(node: BfuncNode): Unit {
+    public func exitBfunc(node: BfuncNode, bindings: HashMap<Int, Context>): Unit {
         let startTime = MonoTime.now()
         // let map = node
         //     .assignments
         //     .map {x => x.collectHashMap(node.syntaxTreeNode.depth)}
         //     .getOrDefault {=> HashMap<Int, Context>()}
-        let map = if (let Some(assignments) <- node.assignments) {
-            assignments.collectHashMap(node.syntaxTreeNode.depth)
-        } else {
-            HashMap<Int, Context>()
-        }
+        // let map = if (let Some(assignments) <- node.assignments) {
+        //     assignments.collectHashMap(node.syntaxTreeNode.depth)
+        // } else {
+        //     HashMap<Int, Context>()
+        // }
         let bfunc = (node.syntaxTreeNode as BfuncSyntaxTreeNode).getOrThrow().bfunc
         // node.truthValue = applyBfunc(bfunc.funcInfo, bfunc.argsId.map {argId => map[argId]})
         // node.truthValue = applyBfunc(bfunc.funcInfo.name, bfunc.argsId.map {argId => map[argId]})
-        node.truthValue = applyBfunc(bfunc.name, bfunc.argsId.map {argId => map[argId]})
+        node.truthValue = applyBfunc(bfunc.name, bfunc.argsId.map {argId => bindings[argId]})
         // let ctxArr = if (let Some(assignments) <- node.assignments) {
         //     assignments.collectArray(bfunc.argsId)
         // } else {
@@ -166,7 +166,7 @@ open class EccGenerator <: Generator {
         // }
         for ((_, child) in node.ctx2child where !child.truthValue) {
             result.add(
-                all: Links(ArrayList([Link(LinkType.Violated, ArrayList([child.assignments.getOrThrow().assignment]))]))
+                all: Links(ArrayList([Link(LinkType.Violated, ArrayList([child.assignment.getOrThrow()]))]))
                     .product(child.links)
                     .links)
         }
@@ -187,7 +187,7 @@ open class EccGenerator <: Generator {
         // }
         for ((_, child) in node.ctx2child where child.truthValue) {
             result.add(
-                all: Links(ArrayList([Link(LinkType.Satisfied, ArrayList([child.assignments.getOrThrow().assignment]))]))
+                all: Links(ArrayList([Link(LinkType.Satisfied, ArrayList([child.assignment.getOrThrow()]))]))
                     .product(child.links)
                     .links)
         }
@@ -228,7 +228,7 @@ open class EccGenerator <: Generator {
         node.links = node.children[0].links.flipset()
     }
 
-    public func exitBfunc(node: BfuncNode): Unit {
+    public func exitBfunc(node: BfuncNode, bindings: HashMap<Int, Context>): Unit {
         node.links = Links(ArrayList<Link>())
     }
 }
