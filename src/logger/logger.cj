@@ -16,6 +16,8 @@ public class Logger <: Resource {
     private var gcStartCount = getGCCount()
     private var gcStartTime = getGCTime() * Duration.microsecond
     private var gcStartFreedSize = getGCFreedSize()
+    private var addTime = Duration.Zero
+    private var deleteTime = Duration.Zero
 
     public init(dir: String, fileName: String) {
         let logDir = Path(dir).normalize()
@@ -46,8 +48,13 @@ public class Logger <: Resource {
         }
     }
 
-    public func addDuration(duration: Duration): Unit {
+    public func addDuration(duration: Duration, tag: Int): Unit {
         elapsedTime += duration
+        if (tag == 1) {
+            addTime += duration
+        } else if (tag == 2) {
+            deleteTime += duration
+        }
         if (elapsedTime - lastOutTime >= Duration.second * 5) {
             println("Elapsed time updated: ${elapsedTime}")
             lastOutTime = elapsedTime
@@ -58,6 +65,8 @@ public class Logger <: Resource {
         logFile.flush()
         logFile.close()
         println("Elapsed time: ${elapsedTime}")
+        println("Add time: ${addTime}")
+        println("Delete time: ${deleteTime}")
         println("maxHeapSize: ${maxUsedHeapSize}")
         println("maxAllocatedHeapSize: ${maxAllocatedHeapSize}")
         println("gcCount: ${getGCCount() - gcStartCount}")

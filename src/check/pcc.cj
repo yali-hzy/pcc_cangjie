@@ -6,7 +6,7 @@ import pcc_cangjie.logger.LOGGER
 import std.collection.{ArrayList, HashMap}
 import std.sort.sort
 import std.time.MonoTime
-import pcc_cangjie.defs.DebugInfo
+// import pcc_cangjie.defs.DebugInfo
 import pcc_cangjie.defs.{maxUsedHeapSize, maxAllocatedHeapSize}
 import std.runtime.{getUsedHeapSize, getAllocatedHeapSize}
 
@@ -44,7 +44,7 @@ class PccMethod <: CheckMethod {
     }
 
     public func handleAdd(cct: Cct, nodeList: ArrayList<Int>, contextId: Int, context: Context): Unit {
-        DebugInfo.reset()
+        // DebugInfo.reset()
         let time = MonoTime.now()
         let sortedNodeList = nodeList.clone()
         sort(sortedNodeList, key: {nodeId => cct.syntaxTree.nodes[nodeId].depth}, descending: true)
@@ -52,22 +52,24 @@ class PccMethod <: CheckMethod {
             pccAdjuster.handleAdd(cct, nodeId, contextId, context)
         }
         let elapsed = MonoTime.now() - time
+        // println(
+        //     "Handled add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} in ${elapsed}.")
         let result = cct.link
         for (link in result) {
             LOGGER.getOrThrow().log(link)
         }
-        LOGGER.getOrThrow().addDuration(elapsed)
-        if (elapsed > Duration.millisecond * 100) {
-            println(
-                "Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
-            println(DebugInfo())
-        }
+        LOGGER.getOrThrow().addDuration(elapsed, 1)
+        // if (elapsed > Duration.millisecond * 100) {
+        //     println(
+        //         "Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+        //     println(DebugInfo())
+        // }
         maxUsedHeapSize = max(maxUsedHeapSize, getUsedHeapSize())
         maxAllocatedHeapSize = max(maxAllocatedHeapSize, getAllocatedHeapSize())
     }
 
     public func handleDelete(cct: Cct, nodeList: ArrayList<Int>, contextId: Int): Unit {
-        DebugInfo.reset()
+        // DebugInfo.reset()
         let time = MonoTime.now()
         let sortedNodeList = nodeList.clone()
         sort(sortedNodeList, key: {nodeId => cct.syntaxTree.nodes[nodeId].depth})
@@ -75,16 +77,17 @@ class PccMethod <: CheckMethod {
             pccAdjuster.handleDelete(cct, nodeId, contextId)
         }
         let elapsed = MonoTime.now() - time
+        // println("After handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList}, links are:")
         let result = cct.link
         for (link in result) {
             LOGGER.getOrThrow().log(link)
         }
-        LOGGER.getOrThrow().addDuration(elapsed)
-        if (elapsed > Duration.millisecond * 100) {
-            println(
-                "Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
-            println(DebugInfo())
-        }
+        LOGGER.getOrThrow().addDuration(elapsed, 2)
+        // if (elapsed > Duration.millisecond * 100) {
+        //     println(
+        //         "Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+        //     println(DebugInfo())
+        // }
         maxUsedHeapSize = max(maxUsedHeapSize, getUsedHeapSize())
         maxAllocatedHeapSize = max(maxAllocatedHeapSize, getAllocatedHeapSize())
     }
@@ -106,6 +109,7 @@ class PccAdjuster {
         this.contextId = contextId
         this.contextChangeType = changeType
         let nodeCount = syntaxTree.nodes.size
+        this.bindings = HashMap<Int, Context>()
         affected = Array(nodeCount, repeat: false)
         var currentNode: ?SyntaxTreeNode = syntaxTree.nodes[nodeId]
         while (let Some(node) <- currentNode) {
@@ -217,7 +221,7 @@ class PccEvaluator <: EccEvaluator & PccEvaluatorListener {
 
 class PccGenerator <: EccGenerator & PccGeneratorListener {
     public func exitForall(node: ForallNode, newNode: CctNode): Unit {
-        let startTime = MonoTime.now()
+        // let startTime = MonoTime.now()
         if (!newNode.truthValue) {
             node.links = node
                 .links
@@ -225,12 +229,12 @@ class PccGenerator <: EccGenerator & PccGeneratorListener {
                     Links(ArrayList([Link(LinkType.Violated, ArrayList([newNode.assignment.getOrThrow()]))]))
                         .product(newNode.links))
         }
-        let elapsed = MonoTime.now() - startTime
-        DebugInfo.generateForallTime += elapsed
+        // let elapsed = MonoTime.now() - startTime
+        // DebugInfo.generateForallTime += elapsed
     }
 
     public func exitExists(node: ExistsNode, newNode: CctNode): Unit {
-        let startTime = MonoTime.now()
+        // let startTime = MonoTime.now()
         if (newNode.truthValue) {
             node.links = node
                 .links
@@ -239,7 +243,7 @@ class PccGenerator <: EccGenerator & PccGeneratorListener {
                         ArrayList([Link(LinkType.Satisfied, ArrayList([newNode.assignment.getOrThrow()]))]))
                         .product(newNode.links))
         }
-        let elapsed = MonoTime.now() - startTime
-        DebugInfo.generateExistsTime += elapsed
+        // let elapsed = MonoTime.now() - startTime
+        // DebugInfo.generateExistsTime += elapsed
     }
 }

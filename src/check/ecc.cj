@@ -5,7 +5,7 @@ import pcc_cangjie.collection.{Link, Links, LinkType}
 import pcc_cangjie.logger.LOGGER
 import std.collection.{fold, ArrayList, filter, HashMap, forEach, any}
 import std.time.MonoTime
-import pcc_cangjie.defs.DebugInfo
+// import pcc_cangjie.defs.DebugInfo
 import pcc_cangjie.defs.{maxUsedHeapSize, maxAllocatedHeapSize}
 import std.runtime.{getUsedHeapSize, getAllocatedHeapSize}
 
@@ -28,7 +28,7 @@ class EccMethod <: CheckMethod {
 
     public func handleAdd(cct: Cct, nodeList: ArrayList<Int>, contextId: Int, context: Context): Unit {
         // println("Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList}")
-        DebugInfo.reset()
+        // DebugInfo.reset()
         let time = MonoTime.now()
         cct.root = handleChange(cct.syntaxTree.root)
         let elapsed = MonoTime.now() - time
@@ -36,18 +36,18 @@ class EccMethod <: CheckMethod {
         for (link in result) {
             LOGGER.getOrThrow().log(link)
         }
-        LOGGER.getOrThrow().addDuration(elapsed)
-        if (elapsed > Duration.millisecond * 100) {
-            println(
-                "Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
-            println(DebugInfo())
-        }
+        LOGGER.getOrThrow().addDuration(elapsed, 1)
+        // if (elapsed > Duration.millisecond * 100) {
+        //     println(
+        //         "Warning: Handling add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+        //     println(DebugInfo())
+        // }
         maxUsedHeapSize = max(maxUsedHeapSize, getUsedHeapSize())
         maxAllocatedHeapSize = max(maxAllocatedHeapSize, getAllocatedHeapSize())
     }
 
     public func handleDelete(cct: Cct, nodeList: ArrayList<Int>, contextId: Int): Unit {
-        DebugInfo.reset()
+        // DebugInfo.reset()
         let time = MonoTime.now()
         cct.root = handleChange(cct.syntaxTree.root)
         let elapsed = MonoTime.now() - time
@@ -55,12 +55,12 @@ class EccMethod <: CheckMethod {
         for (link in result) {
             LOGGER.getOrThrow().log(link)
         }
-        LOGGER.getOrThrow().addDuration(elapsed)
-        if (elapsed > Duration.millisecond * 100) {
-            println(
-                "Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
-            println(DebugInfo())
-        }
+        LOGGER.getOrThrow().addDuration(elapsed, 2)
+        // if (elapsed > Duration.millisecond * 100) {
+        //     println(
+        //         "Warning: Handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} took ${elapsed}, which may indicate a performance issue.")
+        //     // println(DebugInfo())
+        // }
         maxUsedHeapSize = max(maxUsedHeapSize, getUsedHeapSize())
         maxAllocatedHeapSize = max(maxAllocatedHeapSize, getAllocatedHeapSize())
     }
@@ -69,7 +69,7 @@ class EccMethod <: CheckMethod {
 open class EccEvaluator <: Evaluator {
     public func exitForall(node: ForallNode): Unit {
         // no Collection.fold in version 1.0.5
-        let startTime = MonoTime.now()
+        // let startTime = MonoTime.now()
         // node.truthValue = node.ctx2child.values() |> fold(true) {tv, child => tv && child.truthValue}
 
         node.truthValue = true
@@ -82,16 +82,16 @@ open class EccEvaluator <: Evaluator {
 
         // node.truthValue = !any {child => !child[1].truthValue}(node.ctx2child)
         // node.truthValue = !node.ctx2child.values().iterator().any {child => !child.truthValue}
-        let elapsed = MonoTime.now() - startTime
-        DebugInfo.evaluateIterateCount += node.ctx2child.size
-        DebugInfo.evaluateIterateCapacity += node.ctx2child.capacity
-        DebugInfo.evaluateMaxIterateSize = max(DebugInfo.evaluateMaxIterateSize, node.ctx2child.size)
-        DebugInfo.evaluateMaxIterateCapacity = max(DebugInfo.evaluateMaxIterateCapacity, node.ctx2child.capacity)
-        DebugInfo.evaluateForallTime += elapsed
+        // let elapsed = MonoTime.now() - startTime
+        // DebugInfo.evaluateIterateCount += node.ctx2child.size
+        // DebugInfo.evaluateIterateCapacity += node.ctx2child.capacity
+        // DebugInfo.evaluateMaxIterateSize = max(DebugInfo.evaluateMaxIterateSize, node.ctx2child.size)
+        // DebugInfo.evaluateMaxIterateCapacity = max(DebugInfo.evaluateMaxIterateCapacity, node.ctx2child.capacity)
+        // DebugInfo.evaluateForallTime += elapsed
     }
 
     public func exitExists(node: ExistsNode): Unit {
-        let startTime = MonoTime.now()
+        // let startTime = MonoTime.now()
         // node.truthValue = node.ctx2child.values() |> fold(false) {tv, child => tv || child.truthValue}
 
         node.truthValue = false
@@ -103,12 +103,12 @@ open class EccEvaluator <: Evaluator {
         }
         // node.truthValue = any {child => child[1].truthValue}(node.ctx2child)
         // node.truthValue = node.ctx2child.values().iterator().any {child => child.truthValue}
-        let elapsed = MonoTime.now() - startTime
-        DebugInfo.evaluateIterateCount += node.ctx2child.size
-        DebugInfo.evaluateIterateCapacity += node.ctx2child.capacity
-        DebugInfo.evaluateMaxIterateSize = max(DebugInfo.evaluateMaxIterateSize, node.ctx2child.size)
-        DebugInfo.evaluateMaxIterateCapacity = max(DebugInfo.evaluateMaxIterateCapacity, node.ctx2child.capacity)
-        DebugInfo.evaluateExistsTime += elapsed
+        // let elapsed = MonoTime.now() - startTime
+        // DebugInfo.evaluateIterateCount += node.ctx2child.size
+        // DebugInfo.evaluateIterateCapacity += node.ctx2child.capacity
+        // DebugInfo.evaluateMaxIterateSize = max(DebugInfo.evaluateMaxIterateSize, node.ctx2child.size)
+        // DebugInfo.evaluateMaxIterateCapacity = max(DebugInfo.evaluateMaxIterateCapacity, node.ctx2child.capacity)
+        // DebugInfo.evaluateExistsTime += elapsed
     }
 
     public func exitAnd(node: AndNode): Unit {
@@ -128,7 +128,7 @@ open class EccEvaluator <: Evaluator {
     }
 
     public func exitBfunc(node: BfuncNode, bindings: HashMap<Int, Context>): Unit {
-        let startTime = MonoTime.now()
+        // let startTime = MonoTime.now()
         // let map = node
         //     .assignments
         //     .map {x => x.collectHashMap(node.syntaxTreeNode.depth)}
@@ -148,15 +148,15 @@ open class EccEvaluator <: Evaluator {
         //     Array<Context>()
         // }
         // node.truthValue = applyBfunc(bfunc.name, ctxArr)
-        let elapsed = MonoTime.now() - startTime
-        DebugInfo.evaluateBfuncTime += elapsed
+        // let elapsed = MonoTime.now() - startTime
+        // DebugInfo.evaluateBfuncTime += elapsed
         // println("Evaluating Bfunc ${bfunc.funcInfo} with arguments ${bfunc.argsId.map {argId => map[argId]}}: ${node.truthValue}")
     }
 }
 
 open class EccGenerator <: Generator {
     public func exitForall(node: ForallNode): Unit {
-        let startTime = MonoTime.now()
+        // let startTime = MonoTime.now()
         let result = ArrayList<Link>()
         // node.ctx2child.values() |> filter {child => !child.truthValue} |> forEach {
         //     child => result.add(
@@ -171,13 +171,13 @@ open class EccGenerator <: Generator {
                     .links)
         }
         node.links = Links(result)
-        let elapsed = MonoTime.now() - startTime
-        DebugInfo.generateCount += node.links.links.size
-        DebugInfo.generateForallTime += elapsed
+        // let elapsed = MonoTime.now() - startTime
+        // DebugInfo.generateCount += node.links.links.size
+        // DebugInfo.generateForallTime += elapsed
     }
 
     public func exitExists(node: ExistsNode): Unit {
-        let startTime = MonoTime.now()
+        // let startTime = MonoTime.now()
         let result = ArrayList<Link>()
         // node.ctx2child.values() |> filter {child => child.truthValue} |> forEach {
         //     child => result.add(
@@ -192,9 +192,9 @@ open class EccGenerator <: Generator {
                     .links)
         }
         node.links = Links(result)
-        let elapsed = MonoTime.now() - startTime
-        DebugInfo.generateCount += node.links.links.size
-        DebugInfo.generateExistsTime += elapsed
+        // let elapsed = MonoTime.now() - startTime
+        // DebugInfo.generateCount += node.links.links.size
+        // DebugInfo.generateExistsTime += elapsed
     }
 
     public func exitAnd(node: AndNode): Unit {

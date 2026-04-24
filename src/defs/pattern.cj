@@ -1,7 +1,7 @@
 package pcc_cangjie.defs
 
 import std.time.DateTime
-import std.collection.HashMap
+// import std.collection.HashMap
 
 public class Pattern <: ToString {
     public Pattern(public let name: String) {}

@@ -91,7 +91,11 @@ class SyntaxTreeBuilder {
         initialize(id)
         let syntaxTreeRoot = syntaxBuild(constraint.formula, None)
         let syntaxTreeNodes = Array<SyntaxTreeNode>(dfnCounter, {dfn => dfn2SyntaxNode[dfn]})
-        return SyntaxTree(constraint.name, syntaxTreeRoot, syntaxTreeNodes, dfn2VarName)
+        println("Finished building syntax tree for constraint ${constraint.name} with root:\n${syntaxTreeRoot.toString()}")
+        for ((dfn, name) in dfn2VarName) {
+            println("dfn: ${dfn}, varname: ${name}")
+        }
+        return SyntaxTree(constraint.name, syntaxTreeRoot, syntaxTreeNodes, dfn2VarName.clone())
     }
 }
 

@@ -6,9 +6,9 @@ import std.collection.{HashMap, Map, ArrayList, enumerate, map, collectArray}
 import std.collection.concurrent.LinkedBlockingQueue
 import std.sync.Mutex
 import std.sort.sort
-import std.time.MonoTime
-import std.runtime.*
-import std.fs.*
+// import std.time.MonoTime
+// import std.runtime.*
+// import std.fs.*
 import pcc_cangjie.logger.LOGGER
 
 public class CctChecker {

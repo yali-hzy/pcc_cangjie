@@ -3,8 +3,8 @@ package pcc_cangjie.check
 import pcc_cangjie.defs.Context
 import pcc_cangjie.collection.{Assignment, AssignmentLinkedListNode, Links}
 import std.collection.{ArrayList, HashMap, map, collectString}
-import std.time.MonoTime
-import pcc_cangjie.defs.DebugInfo
+// import std.time.MonoTime
+// import pcc_cangjie.defs.DebugInfo
 
 class CctBuilder {
     let listener = EccListener()
@@ -20,26 +20,29 @@ class CctBuilder {
     // }
 
     private func quantifierHelper(refNode: QuantifierSyntaxTreeNode, assignment: ?Assignment) {
-        let startTime = MonoTime.now()
+        // let startTime = MonoTime.now()
         let cctNode: QuantifierNode = match (refNode.nodeType) {
             case Forall => ForallNode(refNode, assignment)
             case Exists => ExistsNode(refNode, assignment)
             case _ => throw IllegalArgumentException("Expected a quantifier node, but got ${refNode.nodeType}")
         }
         let patternNo = refNode.patternNo
-        let endTime = MonoTime.now()
-        DebugInfo.otherTime += endTime - startTime
+        // let endTime = MonoTime.now()
+        // DebugInfo.otherTime += endTime - startTime
         if (patternNo == -1) {
             println("Warning: No pattern found for quantifier at node ${refNode.dfn}")
         } else {
-            var startTime = MonoTime.now()
-            var endTime = MonoTime.now()
+            // var startTime = MonoTime.now()
+            // var endTime = MonoTime.now()
             for ((contextId, (context, _)) in checker.ContextSets[patternNo].contextSet) {
                 let oldValue = bindings.add(refNode.dfn, context)
-                endTime = MonoTime.now()
-                DebugInfo.quantifierHelperIterateTime += endTime - startTime
+                // for ((varId, varContext) in bindings) {
+                //     println("Current bindings: dfn ${varId} -> context ${varContext.id}")
+                // }
+                // endTime = MonoTime.now()
+                // DebugInfo.quantifierHelperIterateTime += endTime - startTime
                 let child = buildHelper(refNode.children[0], cctNode, Assignment(refNode.dfn, context))
-                startTime = MonoTime.now()
+                // startTime = MonoTime.now()
                 cctNode.ctx2child[contextId] = child
                 if (let Some(old) <- oldValue) {
                     bindings[refNode.dfn] = old
@@ -52,7 +55,7 @@ class CctBuilder {
     }
 
     private func nonleafHelper(refNode: SyntaxTreeNode, assignment: ?Assignment) {
-        let startTime = MonoTime.now()
+        // let startTime = MonoTime.now()
         let cctNode: NonleafNode = match (refNode.nodeType) {
             case And => AndNode(refNode, assignment)
             case Or => OrNode(refNode, assignment)
@@ -60,8 +63,8 @@ class CctBuilder {
             case Not => NotNode(refNode, assignment)
             case _ => throw IllegalArgumentException("Unexpected node type ${refNode.nodeType} in binaryHelper")
         }
-        let endTime = MonoTime.now()
-        DebugInfo.otherTime += endTime - startTime
+        // let endTime = MonoTime.now()
+        // DebugInfo.otherTime += endTime - startTime
         cctNode.children = refNode.children.map {child => buildHelper(child, cctNode, None)}
         // let children = ArrayList<CctNode>(2)
         // for (child in refNode.children) {
@@ -88,28 +91,28 @@ class CctBuilder {
         //         assignments = None
         //     }
         // }
-        let end1Time = MonoTime.now()
+        // let end1Time = MonoTime.now()
         // DebugInfo.assignmentTime += end1Time - startTime
         match (refNode.nodeType) {
             case Forall | Exists =>
-                let endTime = MonoTime.now()
-                DebugInfo.otherTime += endTime - end1Time
+                // let endTime = MonoTime.now()
+                // DebugInfo.otherTime += endTime - end1Time
                 let cctNode = quantifierHelper((refNode as QuantifierSyntaxTreeNode).getOrThrow(), assignment)
-                let endTime2 = MonoTime.now()
+                // let endTime2 = MonoTime.now()
                 match (refNode.nodeType) {
                     case Forall => listener.exitForall((cctNode as ForallNode).getOrThrow())
                     case Exists => listener.exitExists((cctNode as ExistsNode).getOrThrow())
                     case _ => throw IllegalStateException(
                         "Unexpected node type ${refNode.nodeType} in quantifierHelper")
                 }
-                let endTime3 = MonoTime.now()
-                DebugInfo.listenerTime += endTime3 - endTime2
+                // let endTime3 = MonoTime.now()
+                // DebugInfo.listenerTime += endTime3 - endTime2
                 return cctNode
             case And | Or | Implies | Not =>
-                let endTime = MonoTime.now()
-                DebugInfo.otherTime += endTime - end1Time
+                // let endTime = MonoTime.now()
+                // DebugInfo.otherTime += endTime - end1Time
                 let cctNode = nonleafHelper(refNode, assignment)
-                let endTime2 = MonoTime.now()
+                // let endTime2 = MonoTime.now()
                 match (refNode.nodeType) {
                     case And => listener.exitAnd((cctNode as AndNode).getOrThrow())
                     case Or => listener.exitOr((cctNode as OrNode).getOrThrow())
@@ -117,13 +120,13 @@ class CctBuilder {
                     case Not => listener.exitNot((cctNode as NotNode).getOrThrow())
                     case _ => throw IllegalStateException("Unexpected node type ${refNode.nodeType} in normalHelper")
                 }
-                let endTime3 = MonoTime.now()
-                DebugInfo.listenerTime += endTime3 - endTime2
+                // let endTime3 = MonoTime.now()
+                // DebugInfo.listenerTime += endTime3 - endTime2
                 return cctNode
             case Bfunc =>
                 let cctNode = BfuncNode(refNode, assignment)
-                let endTime = MonoTime.now()
-                DebugInfo.otherTime += endTime - end1Time
+                // let endTime = MonoTime.now()
+                // DebugInfo.otherTime += endTime - end1Time
                 listener.exitBfunc(cctNode, bindings)
                 // println(cctNode.truthValue)
                 return cctNode
@@ -132,6 +135,11 @@ class CctBuilder {
 
     func build(refNode: SyntaxTreeNode, parent!: ?CctNode = None, ctx!: Context = Context.POISON_CONTEXT, bindings!: HashMap<Int, Context> = HashMap<Int, Context>()): CctNode {
         this.bindings = bindings
+        // if (let Some(b) <- bindings) {
+        //     this.bindings = b
+        // } else {
+        //     this.bindings = HashMap<Int, Context>()
+        // }
         match (parent) {
             case None => buildHelper(refNode, None, None)
             case Some(p) => buildHelper(refNode, p, Assignment(p.syntaxTreeNode.dfn, ctx))
@@ -156,7 +164,14 @@ class Cct {
             if (links.isEmpty()) {
             // str.append("No links")
             } else {
+                // println()
                 for (link in links) {
+                    // println("name: ${syntaxTree.name}")
+                    // for ((id, varname) in syntaxTree.dfn2VarName) {
+                    //     println("dfn: ${id}, varname: ${varname}")
+                    // }
+                    // println("links size: ${links.size}")
+                    // println("Link type: ${link.linkType} ${links[0].linkType}, bindings: ${link.bindings.map {assignment => "(${assignment.varId}, ${assignment.ctx.id})"} |> collectString(delimiter: ",")}")
                     linkstr.add(
                         "${syntaxTree.name}(${links[0].linkType},{${link.bindings.map {assignment => "(${syntaxTree.dfn2VarName[assignment.varId]}, ${assignment.ctx.id})"} |> collectString(delimiter: ",")}})")
                 }
