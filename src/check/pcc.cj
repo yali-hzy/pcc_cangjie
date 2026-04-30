@@ -133,10 +133,19 @@ class PccAdjuster {
                 case node: QuantifierNode => match (contextChangeType) {
                     case ContextChangeType.Add =>
                         let oldValue = bindings.add(node.syntaxTreeNode.dfn, context)
-                        let newNode = cctBuilder.build(node.syntaxTreeNode.children[0], parent: node, ctx: context, bindings: bindings)
+                        let newNode = cctBuilder.build(node.syntaxTreeNode.children[0], parent: node, ctx: context,
+                            bindings: bindings)
                         match (node) {
-                            case forallNode: ForallNode => listener.exitForall(forallNode, newNode)
-                            case existsNode: ExistsNode => listener.exitExists(existsNode, newNode)
+                            case forallNode: ForallNode =>
+                                listener.exitForall(forallNode, newNode)
+                                if (!newNode.truthValue) {
+                                    node.selectedChildren[contextId] = newNode
+                                }
+                            case existsNode: ExistsNode =>
+                                listener.exitExists(existsNode, newNode)
+                                if (newNode.truthValue) {
+                                    node.selectedChildren[contextId] = newNode
+                                }
                             case _ => throw IllegalStateException(
                                 "Unexpected quantifier node type ${node.syntaxTreeNode.nodeType}")
                         }
@@ -148,6 +157,7 @@ class PccAdjuster {
                         }
                     case ContextChangeType.Delete =>
                         node.ctx2child.remove(contextId)
+                        node.selectedChildren.remove(contextId)
                         match (node) {
                             case forallNode: ForallNode => listener.exitForall(forallNode)
                             case existsNode: ExistsNode => listener.exitExists(existsNode)
@@ -161,13 +171,32 @@ class PccAdjuster {
         } else {
             match (node) {
                 case node: QuantifierNode =>
-                    for ((_, child) in node.ctx2child) {
+                    for ((ctxId, child) in node.ctx2child) {
+                        let oldTruthValue = child.truthValue
                         let oldValue = bindings.add(node.syntaxTreeNode.dfn, child.assignment.getOrThrow().ctx)
                         adjustHelper(child)
                         if (let Some(old) <- oldValue) {
                             bindings[node.syntaxTreeNode.dfn] = old
                         } else {
                             bindings.remove(node.syntaxTreeNode.dfn)
+                        }
+                        if (child.truthValue != oldTruthValue) {
+                            match (node) {
+                                case forallNode: ForallNode =>
+                                    if (!child.truthValue) {
+                                        node.selectedChildren[ctxId] = child
+                                    } else {
+                                        node.selectedChildren.remove(ctxId)
+                                    }
+                                case existsNode: ExistsNode =>
+                                    if (child.truthValue) {
+                                        node.selectedChildren[ctxId] = child
+                                    } else {
+                                        node.selectedChildren.remove(ctxId)
+                                    }
+                                case _ => throw IllegalStateException(
+                                    "Unexpected quantifier node type ${node.syntaxTreeNode.nodeType}")
+                            }
                         }
                     }
                     match (node) {
@@ -226,8 +255,8 @@ class PccGenerator <: EccGenerator & PccGeneratorListener {
             node.links = node
                 .links
                 .union(
-                    Links(ArrayList([Link(LinkType.Violated, ArrayList([newNode.assignment.getOrThrow()]))]))
-                        .product(newNode.links))
+                    Links(ArrayList([Link(LinkType.Violated, ArrayList([newNode.assignment.getOrThrow()]))])).product(
+                        newNode.links))
         }
         // let elapsed = MonoTime.now() - startTime
         // DebugInfo.generateForallTime += elapsed
@@ -239,9 +268,8 @@ class PccGenerator <: EccGenerator & PccGeneratorListener {
             node.links = node
                 .links
                 .union(
-                    Links(
-                        ArrayList([Link(LinkType.Satisfied, ArrayList([newNode.assignment.getOrThrow()]))]))
-                        .product(newNode.links))
+                    Links(ArrayList([Link(LinkType.Satisfied, ArrayList([newNode.assignment.getOrThrow()]))])).product(
+                        newNode.links))
         }
         // let elapsed = MonoTime.now() - startTime
         // DebugInfo.generateExistsTime += elapsed

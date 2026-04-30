@@ -72,13 +72,14 @@ open class EccEvaluator <: Evaluator {
         // let startTime = MonoTime.now()
         // node.truthValue = node.ctx2child.values() |> fold(true) {tv, child => tv && child.truthValue}
 
-        node.truthValue = true
-        for ((_, child) in node.ctx2child) {
-            if (!child.truthValue) {
-                node.truthValue = false
-                break
-            }
-        }
+        // node.truthValue = true
+        // for ((_, child) in node.ctx2child) {
+        //     if (!child.truthValue) {
+        //         node.truthValue = false
+        //         break
+        //     }
+        // }
+        node.truthValue = node.selectedChildren.isEmpty()
 
         // node.truthValue = !any {child => !child[1].truthValue}(node.ctx2child)
         // node.truthValue = !node.ctx2child.values().iterator().any {child => !child.truthValue}
@@ -94,13 +95,15 @@ open class EccEvaluator <: Evaluator {
         // let startTime = MonoTime.now()
         // node.truthValue = node.ctx2child.values() |> fold(false) {tv, child => tv || child.truthValue}
 
-        node.truthValue = false
-        for ((_, child) in node.ctx2child) {
-            if (child.truthValue) {
-                node.truthValue = true
-                break
-            }
-        }
+        // node.truthValue = false
+        // for ((_, child) in node.ctx2child) {
+        //     if (child.truthValue) {
+        //         node.truthValue = true
+        //         break
+        //     }
+        // }
+        node.truthValue = !node.selectedChildren.isEmpty()
+
         // node.truthValue = any {child => child[1].truthValue}(node.ctx2child)
         // node.truthValue = node.ctx2child.values().iterator().any {child => child.truthValue}
         // let elapsed = MonoTime.now() - startTime
@@ -164,7 +167,8 @@ open class EccGenerator <: Generator {
         //             .product(child.links)
         //             .links)
         // }
-        for ((_, child) in node.ctx2child where !child.truthValue) {
+        // for ((_, child) in node.ctx2child where !child.truthValue) {
+        for ((_, child) in node.selectedChildren) {
             result.add(
                 all: Links(ArrayList([Link(LinkType.Violated, ArrayList([child.assignment.getOrThrow()]))]))
                     .product(child.links)
@@ -185,7 +189,8 @@ open class EccGenerator <: Generator {
         //             .product(child.links)
         //             .links)
         // }
-        for ((_, child) in node.ctx2child where child.truthValue) {
+        // for ((_, child) in node.ctx2child where child.truthValue) {
+        for ((_, child) in node.selectedChildren) {
             result.add(
                 all: Links(ArrayList([Link(LinkType.Satisfied, ArrayList([child.assignment.getOrThrow()]))]))
                     .product(child.links)

@@ -44,6 +44,16 @@ class CctBuilder {
                 let child = buildHelper(refNode.children[0], cctNode, Assignment(refNode.dfn, context))
                 // startTime = MonoTime.now()
                 cctNode.ctx2child[contextId] = child
+                match (refNode.nodeType) {
+                    case Forall => if (!child.truthValue) {
+                        cctNode.selectedChildren[contextId] = child
+                    }
+                    case Exists => if (child.truthValue) {
+                        cctNode.selectedChildren[contextId] = child
+                    }
+                    case _ => throw IllegalStateException(
+                        "Unexpected node type ${refNode.nodeType} in quantifierHelper")
+                }
                 if (let Some(old) <- oldValue) {
                     bindings[refNode.dfn] = old
                 } else {
@@ -200,6 +210,7 @@ abstract class CctNode {
 
 abstract class QuantifierNode <: CctNode {
     let ctx2child = HashMap<Int, CctNode>()
+    let selectedChildren = HashMap<Int, CctNode>()
     init(syntaxTreeNode: SyntaxTreeNode, assignment: ?Assignment) {
         super(syntaxTreeNode, assignment)
     }
