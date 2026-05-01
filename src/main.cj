@@ -14,6 +14,7 @@ import pcc_cangjie.check.CctChecker
 import pcc_cangjie.timing.{GlobalTimer, MockTimer}
 import pcc_cangjie.logger.{LOGGER, Logger}
 import pcc_cangjie.collection.ContextFlow
+import pcc_cangjie.defs.VERBOSE
 
 // cjpm run --run-args "--data data/data_with_link_oracles --context data/data_1/0-1.txt --pattern consistency_patterns_48.xml --constraint consistency_rules_48.xml --convert none --offline --outdir link_oracle/data_1 --outfile 0-1_answer.txt --method pcc"
 main(args: Array<String>): Int64 {
@@ -27,6 +28,9 @@ main(args: Array<String>): Int64 {
         .get("outfile")
         .getOrDefault {=> "context_check_${convert}_${method}_${freshness}_${interval}.log"}
     LOGGER = Logger(options["outdir"], outfile)
+    if (VERBOSE) {
+        LOGGER.getOrThrow().log("Running with args: ${args}")
+    }
     if (!options.contains("offline")) {
         let (contexts, patterns, constraints) = loadData(dataPath)
         for (constraint in constraints) {
@@ -74,10 +78,11 @@ func parseArgs(args: Array<String>): Option<Map<String, String>> {
         let outDirSpec = ArgumentSpec.Long("outdir", ArgumentMode.RequiredValue)
         let intervalSpec = ArgumentSpec.Long("interval", ArgumentMode.RequiredValue)
         let startTimeSpec = ArgumentSpec.Long("start_time", ArgumentMode.RequiredValue)
-        let offlineSpec = ArgumentSpec.Long("offline", ArgumentMode.OptionalValue)
+        let offlineSpec = ArgumentSpec.Long("offline", ArgumentMode.NoValue)
         let outFileSpec = ArgumentSpec.Long("outfile", ArgumentMode.RequiredValue)
+        let verboseSpec = ArgumentSpec.Full("verbose", r'v', ArgumentMode.NoValue)
         let specs = [dataSpec, contextSpec, patternSpec, constraintSpec, convertSpec, methodSpec, freshnessSpec,
-            outDirSpec, intervalSpec, startTimeSpec, offlineSpec, outFileSpec]
+            outDirSpec, intervalSpec, startTimeSpec, offlineSpec, outFileSpec, verboseSpec]
         let resultMap = HashMap<String, String>(
             [("context", "context.txt"), ("pattern", "patterns.xml"), ("constraint", "constraints.xml"),
                 ("convert", "kernel"), ("method", "ecc"), ("freshness", "20"), ("outdir", "log"), ("interval", "400")])
@@ -96,6 +101,8 @@ func parseArgs(args: Array<String>): Option<Map<String, String>> {
                 case "start_time" => resultMap["start_time"] = option[1]
                 case "offline" => resultMap["offline"] = option[1]
                 case "outfile" => resultMap["outfile"] = option[1]
+                case "verbose" => VERBOSE = true
+                case "v" => VERBOSE = true
                 case _ => throw IllegalArgumentException("Unknown option: ${option[0]}")
             }
         }

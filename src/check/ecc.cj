@@ -8,6 +8,8 @@ import std.time.MonoTime
 // import pcc_cangjie.defs.DebugInfo
 import pcc_cangjie.defs.{maxUsedHeapSize, maxAllocatedHeapSize}
 import std.runtime.{getUsedHeapSize, getAllocatedHeapSize}
+import pcc_cangjie.defs.VERBOSE
+import pcc_cangjie.timing.MockCurrentTime
 
 class EccListener <: CheckListener<Evaluator, Generator> {
     init() {
@@ -32,9 +34,17 @@ class EccMethod <: CheckMethod {
         let time = MonoTime.now()
         cct.root = handleChange(cct.syntaxTree.root)
         let elapsed = MonoTime.now() - time
-        let result = cct.link
-        for (link in result) {
-            LOGGER.getOrThrow().log(link)
+        if (VERBOSE) {
+            LOGGER.getOrThrow().log("Time: ${MockCurrentTime}, add ctx ${contextId} to cct ${cct.syntaxTree.name} with node ${nodeList}. Duration: ${elapsed}.")
+            let result = cct.verboseLink
+            for (link in result) {
+                LOGGER.getOrThrow().log(link)
+            }
+        } else {
+            let result = cct.link
+            for (link in result) {
+                LOGGER.getOrThrow().log(link)
+            }
         }
         LOGGER.getOrThrow().addDuration(elapsed, 1)
         // if (elapsed > Duration.millisecond * 100) {
@@ -51,9 +61,17 @@ class EccMethod <: CheckMethod {
         let time = MonoTime.now()
         cct.root = handleChange(cct.syntaxTree.root)
         let elapsed = MonoTime.now() - time
-        let result = cct.link
-        for (link in result) {
-            LOGGER.getOrThrow().log(link)
+        if (VERBOSE) {
+            LOGGER.getOrThrow().log("Time: ${MockCurrentTime}, delete ctx ${contextId} from cct ${cct.syntaxTree.name} with node ${nodeList}. Duration: ${elapsed}.")
+            let result = cct.verboseLink
+            for (link in result) {
+                LOGGER.getOrThrow().log(link)
+            }
+        } else {
+            let result = cct.link
+            for (link in result) {
+                LOGGER.getOrThrow().log(link)
+            }
         }
         LOGGER.getOrThrow().addDuration(elapsed, 2)
         // if (elapsed > Duration.millisecond * 100) {

@@ -4,6 +4,7 @@ import std.runtime.*
 
 public var FRESHNESS: Duration = 20 * Duration.second
 public var DEBUG = false
+public var VERBOSE = false
 
 // public class DebugInfo <: ToString {
 //     public static var generateTime: Duration = Duration.Zero

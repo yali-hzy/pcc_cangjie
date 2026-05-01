@@ -7,8 +7,10 @@ import std.collection.{ArrayList, HashMap}
 import std.sort.sort
 import std.time.MonoTime
 // import pcc_cangjie.defs.DebugInfo
+import pcc_cangjie.defs.VERBOSE
 import pcc_cangjie.defs.{maxUsedHeapSize, maxAllocatedHeapSize}
 import std.runtime.{getUsedHeapSize, getAllocatedHeapSize}
+import pcc_cangjie.timing.MockCurrentTime
 
 interface PccEvaluatorListener <: Evaluator {
     func exitForall(node: ForallNode, newNode: CctNode): Unit
@@ -54,9 +56,17 @@ class PccMethod <: CheckMethod {
         let elapsed = MonoTime.now() - time
         // println(
         //     "Handled add for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList} in ${elapsed}.")
-        let result = cct.link
-        for (link in result) {
-            LOGGER.getOrThrow().log(link)
+        if (VERBOSE) {
+            LOGGER.getOrThrow().log("Time: ${MockCurrentTime}, add ctx ${contextId} to cct ${cct.syntaxTree.name} with node ${nodeList}. Duration: ${elapsed}.")
+            let result = cct.verboseLink
+            for (link in result) {
+                LOGGER.getOrThrow().log(link)
+            }
+        } else {
+            let result = cct.link
+            for (link in result) {
+                LOGGER.getOrThrow().log(link)
+            }
         }
         LOGGER.getOrThrow().addDuration(elapsed, 1)
         // if (elapsed > Duration.millisecond * 100) {
@@ -78,9 +88,17 @@ class PccMethod <: CheckMethod {
         }
         let elapsed = MonoTime.now() - time
         // println("After handling delete for context ${contextId} in constraint ${cct.syntaxTree.name} with nodeList ${nodeList}, links are:")
-        let result = cct.link
-        for (link in result) {
-            LOGGER.getOrThrow().log(link)
+        if (VERBOSE) {
+            LOGGER.getOrThrow().log("Time: ${MockCurrentTime}, delete ctx ${contextId} from cct ${cct.syntaxTree.name} with node ${nodeList}. Duration: ${elapsed}.")
+            let result = cct.verboseLink
+            for (link in result) {
+                LOGGER.getOrThrow().log(link)
+            }
+        } else {
+            let result = cct.link
+            for (link in result) {
+                LOGGER.getOrThrow().log(link)
+            }
         }
         LOGGER.getOrThrow().addDuration(elapsed, 2)
         // if (elapsed > Duration.millisecond * 100) {

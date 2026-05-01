@@ -15,3 +15,5 @@ public class MockTimer {
 }
 
 public var GlobalTimer: ?MockTimer = None
+
+public var MockCurrentTime: DateTime = DateTime.of(year: 2026, month: 1, dayOfMonth:1)

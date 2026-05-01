@@ -190,6 +190,29 @@ class Cct {
         }
     }
 
+    prop verboseLink: ArrayList<String> {
+        get() {
+            let linkstr = ArrayList<String>()
+            let links = root.getOrThrow().links.links
+            if (links.isEmpty()) {
+            // str.append("No links")
+            } else {
+                // println()
+                for (link in links) {
+                    // println("name: ${syntaxTree.name}")
+                    // for ((id, varname) in syntaxTree.dfn2VarName) {
+                    //     println("dfn: ${id}, varname: ${varname}")
+                    // }
+                    // println("links size: ${links.size}")
+                    // println("Link type: ${link.linkType} ${links[0].linkType}, bindings: ${link.bindings.map {assignment => "(${assignment.varId}, ${assignment.ctx.id})"} |> collectString(delimiter: ",")}")
+                    linkstr.add(
+                        "${syntaxTree.name}(${link.linkType},{${link.bindings.map {assignment => "(${assignment.varId}, ${syntaxTree.dfn2VarName[assignment.varId]}, ${assignment.ctx})"} |> collectString(delimiter: ",")}})")
+                }
+            }
+            return linkstr
+        }
+    }
+
     prop result: String {
         get() {
             if (!root.getOrThrow().truthValue) {

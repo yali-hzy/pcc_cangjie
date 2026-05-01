@@ -10,6 +10,7 @@ import std.sort.sort
 // import std.runtime.*
 // import std.fs.*
 import pcc_cangjie.logger.LOGGER
+import pcc_cangjie.timing.MockCurrentTime
 
 public class CctChecker {
     let PatternNames2Id: HashMap<String, Int> = HashMap<String, Int>()
@@ -136,6 +137,7 @@ public class CctChecker {
             // }
             // println(
             //     "Processing context change item: ${item.contextId} with timestamp ${item.timestamp} and type ${item.changeType} pattern ${patterns[item.patternId].name}")
+            MockCurrentTime = item.timestamp
             match (item.changeType) {
                 case ContextChangeType.Add => ContextSets[item.patternId].offlineAdd(item.contextId, item.context)
                 case ContextChangeType.Delete => ContextSets[item.patternId].offlineDelete(item.contextId)

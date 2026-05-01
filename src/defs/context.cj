@@ -134,16 +134,31 @@ public open class Context <: ToString & Comparable<Context> {
             // for ((key, value) in props) {
             //     str.append("\t${key}=${value}\n")
             // }
-            str.append("\tcategory=${category}\n")
-            str.append("\tsubject=${subject}\n")
-            str.append("\tpredicate=${predicate}\n")
-            str.append("\tobject=${object}\n")
-            str.append("\tsite=${site}\n")
+            str.append("\tid=${id}\n")
+            if (category != POISON_STRING) {
+                str.append("\tcategory=${category}\n")
+            }
+            if (subject != POISON_STRING) {
+                str.append("\tsubject=${subject}\n")
+            }
+            if (predicate != POISON_STRING) {
+                str.append("\tpredicate=${predicate}\n")
+            }
+            if (object != POISON_STRING) {
+                str.append("\tobject=${object}\n")
+            }
+            if (site != POISON_STRING) {
+                str.append("\tsite=${site}\n")
+            }
             str.append("\tlongitude=${longitude}\n")
             str.append("\tlatitude=${latitude}\n")
             str.append("\tspeed=${speed}\n")
-            str.append("\tlifespan=${lifespan}\n")
-            str.append("\ttimestamp=${timestamp}\n")
+            if (lifespan != Moment(POISON_DATE)) {
+                str.append("\tlifespan=${lifespan}\n")
+            }
+            if (timestamp != POISON_DATE) {
+                str.append("\ttimestamp=${timestamp}\n")
+            }
             str.append(")")
             return str.toString()
         }

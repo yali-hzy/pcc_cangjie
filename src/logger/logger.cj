@@ -5,6 +5,7 @@ import std.fs.{File, Path, Directory, removeIfExists, exists}
 import std.collection.HashSet
 import pcc_cangjie.defs.{maxUsedHeapSize, maxAllocatedHeapSize}
 import std.runtime.{getGCCount, getGCTime, getGCFreedSize}
+import pcc_cangjie.defs.VERBOSE
 
 public class Logger <: Resource {
     let logFile: File
@@ -41,6 +42,10 @@ public class Logger <: Resource {
         // let msg = "[${GlobalTimer.getOrThrow().now()}] ${message}\n"
         // logFile.write(msg.toArray())
         // print(msg)
+        if (VERBOSE) {
+            logFile.write("${message}\n".toArray())
+            return
+        }
         if (!message.isEmpty() && !linkSet.contains(message)) {
             logFile.write("${message}\n".toArray())
             // println(message)
