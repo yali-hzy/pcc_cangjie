@@ -64,11 +64,7 @@ public class XmlParser {
                 }
                 let parts = trimmedValue.split(" ", removeEmpty: true)
                 let tagName = parts[0]
-                let newNode = XmlNode(tagName, if (stack.isEmpty()) {
-                    None
-                } else {
-                    stack.peek()
-                })
+                let newNode = XmlNode(tagName, stack.peek())
                 // println("Parsed tag: ${tagName}, attributes: ${parts[1..]}")
                 let partsList = ArrayList<String>()
                 for (i in 1..parts.size) {
